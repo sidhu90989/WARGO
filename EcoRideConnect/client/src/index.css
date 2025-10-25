@@ -281,9 +281,9 @@
   /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
    * buttons/badges can remove the automatic brightness adjustment on interactions
    * and program their own. */
-  .no-default-hover-elevate {}
-
-  .no-default-active-elevate {}
+  /* Intentionally no declarations for these marker classes; they are used only
+    as flags in :not(.no-default-*) selectors below. Leaving them undefined
+    avoids editor "empty rule" warnings and keeps behavior unchanged. */
 
 
   /**
