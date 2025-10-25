@@ -21,12 +21,45 @@
   .bottom-sheet { height: 35vh; }
 }
 
-/* Desktop Rider - 1024px+ */
+/* Desktop Rider/Driver - 1024px+ */
 @media (min-width: 1024px) {
+  /* Two-panel layout: map on the left, details on the right */
   .ecoride-container {
-    max-width: 500px; /* Mobile-like experience */
-    margin: 0 auto;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "header header"
+      "map side";
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .ecoride-header {
+    grid-area: header;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: hsl(var(--background));
+  }
+
+  .map-container {
+    grid-area: map;
+    height: auto;            /* let grid define height */
+    min-height: 0;           /* allow child to grow */
+  }
+
+  .bottom-sheet {
+    grid-area: side;
+    height: auto;
+    min-height: 0;
+    overflow-y: auto;
+    border-left: 1px solid hsl(var(--border));
+    border-top: none;
+  }
+
+  .ecoride-bottom-nav {
+    display: none;           /* hide mobile bottom nav on desktop */
   }
 }
 

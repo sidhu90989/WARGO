@@ -55,14 +55,14 @@ export default function EcoRideLayout({
   if (role === 'driver') {
     return (
       <div className={['ecoride-container', className].filter(Boolean).join(' ')} style={style}>
-        <header style={{ borderBottom: '1px solid var(--border)' }}>{header}</header>
+        <header className="ecoride-header" style={{ borderBottom: '1px solid var(--border)' }}>{header}</header>
         <div className="map-container" style={{ position: 'relative' }}>
           {mapArea}
         </div>
         <div className="bottom-sheet" style={{ borderTop: '1px solid var(--border)' }}>
           {bottomPanel}
         </div>
-        <nav style={{ position: 'sticky', bottom: 0, borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
+        <nav className="ecoride-bottom-nav" style={{ position: 'sticky', bottom: 0, borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
           {bottomNav}
         </nav>
       </div>
@@ -72,14 +72,14 @@ export default function EcoRideLayout({
   // rider
   return (
     <div className={['ecoride-container', className].filter(Boolean).join(' ')} style={style}>
-      <header style={{ borderBottom: '1px solid var(--border)' }}>{header}</header>
+      <header className="ecoride-header" style={{ borderBottom: '1px solid var(--border)' }}>{header}</header>
       <div className="map-container" style={{ position: 'relative' }}>
         {mapArea}
       </div>
       <div className="bottom-sheet" style={{ borderTop: '1px solid var(--border)' }}>
         {bottomPanel}
       </div>
-      <nav style={{ position: 'sticky', bottom: 0, borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
+      <nav className="ecoride-bottom-nav" style={{ position: 'sticky', bottom: 0, borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
         {bottomNav}
       </nav>
     </div>
