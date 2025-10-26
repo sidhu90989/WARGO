@@ -61,8 +61,36 @@ export async function setupVite(app: Express, server: Server) {
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
+      const err = e as NodeJS.ErrnoException;
+      // If the legacy client index.html is missing (multi-app setup), serve a simple landing page
+      if (err.code === "ENOENT") {
+        const page = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EcoRide API (Dev)</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 2rem; line-height: 1.6; }
+      code { background: #f4f4f5; padding: 0 .25rem; border-radius: 4px; }
+      ul { margin: .5rem 0 0 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>EcoRide API server is running</h1>
+    <p>This repository now uses three separate SPAs for development. Open them directly:</p>
+    <ul>
+      <li>Admin: <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+      <li>Driver: <a href="http://localhost:5174" target="_blank">http://localhost:5174</a></li>
+      <li>Rider: <a href="http://localhost:5175" target="_blank">http://localhost:5175</a></li>
+    </ul>
+    <p>Tip: run <code>npm run dev:apps</code> to start all three Vite servers.</p>
+  </body>
+</html>`;
+        return res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      }
+      vite.ssrFixStacktrace(err);
+      next(err);
     }
   });
 }
