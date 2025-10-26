@@ -22,9 +22,9 @@ export default defineConfig({
         'icons/icon-512x512.png',
       ],
       manifest: {
-        name: 'EcoRide Connect',
-        short_name: 'EcoRide',
-        description: 'Eco-friendly ridesharing platform',
+        name: 'Surya Ride',
+        short_name: 'SuryaRide',
+        description: 'Reliable rides, anytime',
         theme_color: '#00A86B',
         background_color: '#ffffff',
         start_url: '/',

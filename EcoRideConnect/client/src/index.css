@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* EcoRide responsive helpers are imported by EcoRideLayout to avoid global CSS import order warnings */
+/* Surya Ride responsive helpers are imported by SuryaRideLayout to avoid global CSS import order warnings */
 
 /* LIGHT MODE */
 :root {

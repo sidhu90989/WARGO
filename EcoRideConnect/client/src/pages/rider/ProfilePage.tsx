@@ -158,7 +158,7 @@ export default function ProfilePage() {
               <h2 className="font-serif text-xl font-semibold">{profile.name}</h2>
               <p className="text-muted-foreground">{profile.email}</p>
               <Badge variant="secondary" className="mt-1">
-                Eco Rider • Level 3
+                Surya Rider • Level 3
               </Badge>
             </div>
           </div>

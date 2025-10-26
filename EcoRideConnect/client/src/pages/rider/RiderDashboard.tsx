@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState, useRef } from 'react';
-import EcoRideLayout from '@/components/EcoRideLayout';
+import SuryaRideLayout from '@/components/SuryaRideLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -526,7 +526,7 @@ export default function RiderDashboard() {
               onClick={async () => {
                 if (isIOS) {
                   toast({
-                    title: 'Add to Home Screen',
+                    title: 'Add Surya Ride to Home Screen',
                     description: 'Use the Share button → Add to Home Screen',
                   });
                 } else {
@@ -535,7 +535,7 @@ export default function RiderDashboard() {
               }}
             >
               <Download className="h-4 w-4 mr-2" />
-              Install App
+              Install Surya Ride
             </Button>
           )}
           <div className="flex items-center gap-2 bg-background rounded-full px-4 py-2 shadow-lg">
@@ -729,7 +729,7 @@ export default function RiderDashboard() {
 
   return (
     <>
-      <EcoRideLayout role="rider" header={header} mapArea={mapArea} bottomPanel={bottomPanel} />
+  <SuryaRideLayout role="rider" header={header} mapArea={mapArea} bottomPanel={bottomPanel} />
       {/* Menu Drawer */}
       <Dialog open={showMenu} onOpenChange={setShowMenu}>
         <DialogContent className="sm:max-w-md">

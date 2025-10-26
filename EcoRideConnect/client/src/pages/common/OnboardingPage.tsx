@@ -7,7 +7,7 @@ export default function OnboardingPage() {
       {["Fast", "Safe", "Affordable"].map((title, i) => (
         <Card key={i} className="p-6">
           <div className="text-lg font-semibold">{title}</div>
-          <div className="text-sm text-muted-foreground">Learn more about RideConnect</div>
+          <div className="text-sm text-muted-foreground">Learn more about Surya Ride</div>
         </Card>
       ))}
       <div className="text-right">

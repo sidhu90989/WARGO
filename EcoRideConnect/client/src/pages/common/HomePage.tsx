@@ -19,7 +19,7 @@ export default function HomePage() {
             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
               <MapPin className="h-5 w-5 text-primary" />
             </div>
-            <span className="font-serif text-xl font-bold">RideConnect</span>
+            <span className="font-serif text-xl font-bold">Surya Ride</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -33,7 +33,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-7xl px-4 pt-12 pb-8 grid gap-10 md:grid-cols-2 items-center">
+    <section className="mx-auto max-w-7xl px-4 pt-12 pb-8 grid gap-10 md:grid-cols-2 items-center">
         <div className="space-y-6">
           <h1 className="font-serif text-4xl md:text-5xl font-semibold leading-tight">
             Your reliable ride, always on time.
@@ -109,7 +109,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 text-sm text-muted-foreground flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" />
-            <span>RideConnect</span>
+            <span>Surya Ride</span>
           </div>
           <div>
             <button className="underline-offset-4 hover:underline" onClick={() => setLocation("/charging-stations")}>Charging Stations</button>

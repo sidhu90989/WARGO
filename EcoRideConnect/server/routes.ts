@@ -243,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const decoded = await admin.auth().verifyIdToken(idToken);
       const firebaseUid = decoded.uid;
       const email = decoded.email || undefined;
-      const name = (decoded.name as string | undefined) || (email ? email.split('@')[0] + ' User' : 'RideConnect User');
+  const name = (decoded.name as string | undefined) || (email ? email.split('@')[0] + ' User' : 'Surya Ride User');
       // Normalize phone so empty strings don't violate unique constraint
       const normalizePhone = (p?: string | null): string | null => {
         if (!p) return null;

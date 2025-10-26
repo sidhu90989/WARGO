@@ -1,4 +1,4 @@
-/* Deprecated file. Please use 'suryaride-responsive.css'. */
+/* Surya Ride responsive scaffold; not imported by default. */
 
 /* Mobile (Rider/Driver App) - 0-768px */
 .ecoride-container { 
@@ -61,11 +61,4 @@
   .ecoride-bottom-nav {
     display: none;           /* hide mobile bottom nav on desktop */
   }
-}
-
-/* Desktop Admin - 1024px+ */
-.admin-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  height: 100vh;
 }

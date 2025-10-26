@@ -90,7 +90,7 @@ export default function RatingPage() {
             <div className="space-y-2">
               <h3 className="font-serif text-2xl font-semibold">Trip Complete!</h3>
               <p className="text-sm text-muted-foreground">
-                Thank you for choosing RideConnect. Your feedback helps us serve you better.
+                Thank you for choosing Surya Ride. Your feedback helps us serve you better.
               </p>
             </div>
             
@@ -325,7 +325,7 @@ export default function RatingPage() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            Thank you for riding with RideConnect. Your feedback helps us improve.
+            Thank you for riding with Surya Ride. Your feedback helps us improve.
           </p>
         </Card>
 

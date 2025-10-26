@@ -21,7 +21,7 @@ export function FullPageLoader() {
     <div className="h-screen w-full flex items-center justify-center bg-background">
       <div className="text-center space-y-4">
         <LoadingSpinner size="lg" />
-        <p className="text-muted-foreground">Loading RideConnect...</p>
+  <p className="text-muted-foreground">Surya Ride is loading...</p>
       </div>
     </div>
   );
