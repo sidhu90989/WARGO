@@ -6,7 +6,8 @@
   "description": "Surya Ride - Reliable Ride Sharing",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "dev:apps": "concurrently \"npm:dev:rider\" \"npm:dev:driver\" \"npm:dev:admin\"",
+  "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "dev:rider": "vite --config rider-app/vite.config.ts",
     "dev:driver": "vite --config driver-app/vite.config.ts",
     "dev:admin": "vite --config admin-app/vite.config.ts",
@@ -106,6 +107,7 @@
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
+    "concurrently": "^9.0.1",
     "cross-env": "^7.0.3",
     "@replit/vite-plugin-cartographer": "^0.3.1",
     "@replit/vite-plugin-dev-banner": "^0.1.1",

@@ -3,6 +3,7 @@
  */
 import { io, Socket } from 'socket.io-client';
 import type { LatLng } from '../types/geo';
+import { SOCKET_EVENTS } from './socketEvents';
 
 export interface RideRequest {
   riderId: string;
@@ -69,38 +70,46 @@ export const disconnectSocket = (): void => { if (socket) { socket.disconnect();
 // Driver events
 export const sendDriverLocationUpdate = (driverId: string, location: LatLng): void => {
   if (!socket) return;
+  // Legacy + namespaced
   socket.emit('driver_location_update', { driverId, location, timestamp: Date.now() });
+  socket.emit('driver:location_update', { location });
+  socket.emit(SOCKET_EVENTS.DRIVER.UPDATE_LOCATION, { driverId, location, timestamp: Date.now() });
 };
 export const updateDriverStatus = (driverId: string, isAvailable: boolean): void => {
   if (!socket) return;
   socket.emit('driver_status_update', { driverId, isAvailable, timestamp: Date.now() });
 };
+export const goOnline = (location: LatLng): void => { if (!socket) return; socket.emit('driver:online', { location }); };
+export const goOffline = (): void => { if (!socket) return; socket.emit('driver:offline'); };
 export const acceptRideRequest = (rideId: string, driverId: string): void => {
   if (!socket) return;
   socket.emit('ride_accept', { rideId, driverId, timestamp: Date.now() });
+  socket.emit('ride:accept', { rideId });
+  socket.emit(SOCKET_EVENTS.DRIVER.ACCEPT_RIDE, { rideId, driverId, timestamp: Date.now() });
 };
 export const rejectRideRequest = (rideId: string, driverId: string, reason?: string): void => {
   if (!socket) return;
   socket.emit('ride_reject', { rideId, driverId, reason, timestamp: Date.now() });
+  socket.emit('ride:reject', { rideId, reason });
 };
-export const startRide = (rideId: string): void => { if (!socket) return; socket.emit('ride_start', { rideId, timestamp: Date.now() }); };
-export const completeRide = (rideId: string): void => { if (!socket) return; socket.emit('ride_complete', { rideId, timestamp: Date.now() }); };
-export const onRideRequest = (cb: (ride: RideDetails) => void): void => { if (!socket) return; socket.on('new_ride_request', cb); };
-export const offRideRequest = (): void => { if (!socket) return; socket.off('new_ride_request'); };
+export const startRide = (rideId: string): void => { if (!socket) return; socket.emit('ride_start', { rideId, timestamp: Date.now() }); socket.emit('ride:start', { rideId }); socket.emit(SOCKET_EVENTS.DRIVER.RIDE_STARTED, { rideId, timestamp: Date.now() }); };
+export const completeRide = (rideId: string): void => { if (!socket) return; socket.emit('ride_complete', { rideId, timestamp: Date.now() }); socket.emit('ride:complete', { rideId }); socket.emit(SOCKET_EVENTS.DRIVER.RIDE_COMPLETED, { rideId, timestamp: Date.now() }); };
+export const onRideRequest = (cb: (ride: RideDetails) => void): void => { if (!socket) return; socket.on('new_ride_request', cb); socket.on('ride:request', cb as any); socket.on(SOCKET_EVENTS.DRIVER.NEW_RIDE_REQUEST, cb as any); };
+export const offRideRequest = (): void => { if (!socket) return; socket.off('new_ride_request'); socket.off('ride:request'); };
 
 // Rider events
-export const requestRide = (rideRequest: RideRequest): void => { if (!socket) return; socket.emit('ride_request', { ...rideRequest, timestamp: Date.now() }); };
-export const cancelRide = (rideId: string, reason?: string): void => { if (!socket) return; socket.emit('ride_cancel', { rideId, reason, timestamp: Date.now() }); };
-export const onDriverAssigned = (cb: (d: { rideId: string; driver: DriverLocation }) => void): void => { if (!socket) return; socket.on('driver_assigned', cb); };
-export const onDriverLocationUpdate = (cb: (location: LatLng) => void): void => { if (!socket) return; socket.on('driver_location', cb); };
-export const onRideStatusUpdate = (cb: (status: RideDetails) => void): void => { if (!socket) return; socket.on('ride_status_update', cb); };
-export const removeRiderListeners = (): void => { if (!socket) return; socket.off('driver_assigned'); socket.off('driver_location'); socket.off('ride_status_update'); };
+export const requestRide = (rideRequest: RideRequest): void => { if (!socket) return; socket.emit('ride_request', { ...rideRequest, timestamp: Date.now() }); socket.emit('ride:request', rideRequest); socket.emit(SOCKET_EVENTS.RIDER.REQUEST_RIDE, { ...rideRequest, timestamp: Date.now() }); };
+export const cancelRide = (rideId: string, reason?: string): void => { if (!socket) return; socket.emit('ride_cancel', { rideId, reason, timestamp: Date.now() }); socket.emit('ride:cancel', { rideId }); socket.emit(SOCKET_EVENTS.RIDER.CANCEL_RIDE, { rideId, reason, timestamp: Date.now() }); };
+export const onDriverAssigned = (cb: (d: { rideId: string; driver: DriverLocation }) => void): void => { if (!socket) return; socket.on('driver_assigned', cb); socket.on('ride:driver_assigned', cb as any); socket.on(SOCKET_EVENTS.RIDER.DRIVER_ASSIGNED, cb as any); };
+export const onDriverLocationUpdate = (cb: (location: LatLng) => void): void => { if (!socket) return; socket.on('driver_location', cb); socket.on('ride:driver_location', cb as any); socket.on(SOCKET_EVENTS.RIDER.DRIVER_LOCATION, cb as any); };
+export const onRideStatusUpdate = (cb: (status: RideDetails) => void): void => { if (!socket) return; socket.on('ride_status_update', cb); socket.on('ride:started', cb as any); socket.on('ride:completed', cb as any); socket.on(SOCKET_EVENTS.DRIVER.RIDE_STARTED, cb as any); socket.on(SOCKET_EVENTS.DRIVER.RIDE_COMPLETED, cb as any); };
+export const removeRiderListeners = (): void => { if (!socket) return; socket.off('driver_assigned'); socket.off('ride:driver_assigned'); socket.off('driver_location'); socket.off('ride:driver_location'); socket.off('ride_status_update'); socket.off('ride:started'); socket.off('ride:completed'); };
 
 // Admin events
-export const requestAllDrivers = (): void => { if (!socket) return; socket.emit('request_all_drivers'); };
-export const onAllDriversLocations = (cb: (drivers: DriverLocation[]) => void): void => { if (!socket) return; socket.on('all_drivers_locations', cb); };
-export const onAllActiveRides = (cb: (rides: RideDetails[]) => void): void => { if (!socket) return; socket.on('all_active_rides', cb); };
-export const onPlatformMetrics = (cb: (m: { activeDrivers: number; activeRiders: number; ongoingRides: number; todayRevenue: number; }) => void): void => { if (!socket) return; socket.on('platform_metrics', cb); };
+export const requestAllDrivers = (): void => { if (!socket) return; socket.emit('request_all_drivers'); socket.emit('admin:get_all_drivers'); };
+export const onAllDriversLocations = (cb: (drivers: DriverLocation[]) => void): void => { if (!socket) return; socket.on('all_drivers_locations', cb); socket.on('admin:all_drivers', (payload: any) => cb((payload?.drivers ?? payload) as any)); socket.on(SOCKET_EVENTS.ADMIN.DRIVERS_LOCATION, cb as any); };
+export const onAllActiveRides = (cb: (rides: RideDetails[]) => void): void => { if (!socket) return; socket.on('all_active_rides', cb); socket.on('admin:active_rides', (payload: any) => cb((payload?.rides ?? payload) as any)); socket.on(SOCKET_EVENTS.ADMIN.ALL_RIDES_UPDATE, cb as any); };
+export const onPlatformMetrics = (cb: (m: { activeDrivers: number; activeRiders: number; ongoingRides: number; todayRevenue: number; }) => void): void => { if (!socket) return; socket.on('platform_metrics', cb); socket.on('platform:metrics', cb as any); socket.on(SOCKET_EVENTS.ADMIN.PLATFORM_METRICS, cb as any); };
 export const removeAdminListeners = (): void => { if (!socket) return; socket.off('all_drivers_locations'); socket.off('all_active_rides'); socket.off('platform_metrics'); };
 
 // Common

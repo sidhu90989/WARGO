@@ -1,13 +1,17 @@
 {
   "include": [
-    "client/src/**/*",
     "shared/**/*",
-    "server/**/*",
-    "rider-app/src/**/*",
-    "driver-app/src/**/*",
-    "admin-app/src/**/*"
+    "server/**/*"
   ],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "**/*_clean.tsx"],
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
+    "**/*.test.ts",
+    "**/*_clean.tsx",
+    // Exclude UI components from root typecheck; apps typecheck them in their own tsconfigs
+    "shared/components/ui/**"
+  ],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
@@ -23,8 +27,9 @@
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "paths": {
-      "@/*": ["./client/src/*"],
-      "@shared/*": ["./shared/*"]
+      "@/*": ["./shared/*"],
+      "@shared/*": ["./shared/*"],
+      "@types/*": ["./shared/types/*"]
     }
   }
 }

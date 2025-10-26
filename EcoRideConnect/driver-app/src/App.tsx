@@ -1,11 +1,25 @@
 import React from 'react';
-import { AuthProvider } from '../../client/src/contexts/AuthContext';
-import DriverDashboard from '../../client/src/pages/driver/DriverDashboard';
+import { Route, Switch, Router } from 'wouter';
+import { AuthProvider } from '@shared/hooks/useAuth';
+import { PreferencesProvider } from './context/PreferencesContext';
+import DriverDashboard from './pages/DriverDashboard';
 
 export default function App() {
   return (
     <AuthProvider>
-      <DriverDashboard />
+      <PreferencesProvider>
+        <Router>
+          <Switch>
+            <Route path="/" component={DriverDashboard} />
+            {/* Temporarily route feature pages to dashboard until dedicated pages are migrated */}
+            <Route path="/active" component={DriverDashboard} />
+            <Route path="/earnings" component={DriverDashboard} />
+            <Route path="/availability" component={DriverDashboard} />
+            <Route path="/profile" component={DriverDashboard} />
+            <Route>404 - Not Found</Route>
+          </Switch>
+        </Router>
+      </PreferencesProvider>
     </AuthProvider>
   );
 }

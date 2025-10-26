@@ -1,11 +1,29 @@
 import React from 'react';
-import { AuthProvider } from '../../client/src/contexts/AuthContext';
-import RiderDashboard from '../../client/src/pages/rider/RiderDashboard';
+import { Route, Switch, Router } from 'wouter';
+import { AuthProvider } from '@shared/hooks/useAuth';
+import { PreferencesProvider } from './context/PreferencesContext';
+// Pages (temporarily sourced from original client until migration completes)
+import RiderDashboard from './pages/RiderDashboard';
+import RideHistoryPage from './pages/RideHistoryPage';
+import RideTrackPage from './pages/RideTrackPage';
+import PaymentPage from './pages/PaymentPage';
+import WalletPage from './pages/WalletPage';
 
 export default function App() {
   return (
     <AuthProvider>
-      <RiderDashboard />
+      <PreferencesProvider>
+        <Router>
+          <Switch>
+            <Route path="/" component={RiderDashboard} />
+            <Route path="/rides" component={RideHistoryPage} />
+            <Route path="/ride/:id" component={RideTrackPage as any} />
+            <Route path="/payment" component={PaymentPage} />
+            <Route path="/wallet" component={WalletPage} />
+            <Route>404 - Not Found</Route>
+          </Switch>
+        </Router>
+      </PreferencesProvider>
     </AuthProvider>
   );
 }

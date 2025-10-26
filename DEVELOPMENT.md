@@ -22,24 +22,33 @@ npm run db:push
 
 4. **Start Development**
 ```bash
+# API server
 npm run dev
+
+# Frontend SPAs
+npm run dev:apps
+# Rider:  http://localhost:5173
+# Driver: http://localhost:5174
+# Admin:  http://localhost:5175
 ```
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run check` - Run TypeScript type checking
-- `npm run db:push` - Push database schema changes
+- `npm run dev`       - Start API server in dev
+- `npm run dev:apps`  - Start Rider, Driver, Admin SPAs in parallel
+- `npm run build`     - Build API server bundle
+- `npm run build:apps`- Build all SPAs
+- `npm run start`     - Start production server
+- `npm run check`     - Run TypeScript type checking
+- `npm run db:push`   - Push database schema changes
 
 ## Project Architecture
 
 ### Frontend (React + TypeScript)
-- **Components**: Reusable UI components in `/client/src/components`
-- **Pages**: Route-level components in `/client/src/pages`
-- **Hooks**: Custom React hooks in `/client/src/hooks`
-- **Contexts**: React context providers in `/client/src/contexts`
+- Rider SPA: `/rider-app`
+- Driver SPA: `/driver-app`
+- Admin SPA: `/admin-app`
+- Reusable UI/hooks/maps/realtime: `/shared`
 
 ### Backend (Express + TypeScript)
 - **Server**: Main server logic in `/server`
@@ -69,7 +78,7 @@ npm run dev
 
 The app automatically deploys to GitHub Pages when you push to main branch.
 
-**Live Demo**: [https://sidhu90989.github.io/Echo-Ride/](https://sidhu90989.github.io/Echo-Ride/)
+Note: Legacy GitHub Pages demo referred to the monolithic client and is no longer maintained.
 
 ### PR Preview Databases (Neon)
 

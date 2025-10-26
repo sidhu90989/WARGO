@@ -25,11 +25,13 @@ Tip: Set `VITE_GOOGLE_MAPS_API_KEY` to enable maps in the client.
 ## 🧱 Project structure
 ```
 EcoRideConnect/
-├── client/                 # React app (components, pages, hooks, lib)
-├── server/                 # Express server (routes, storage, integrations)
-├── shared/                 # Shared types and DB schema (drizzle)
+├── rider-app/              # Rider SPA (React + Vite)
+├── driver-app/             # Driver SPA (React + Vite)
+├── admin-app/              # Admin SPA (React + Vite)
+├── shared/                 # Shared UI, hooks, realtime, types, schema
+├── server/                 # Express API (routes, services, sockets)
 ├── migrations/             # Drizzle SQL migrations
-└── dist/                   # Build output
+└── dist/                   # Build output (server bundle + static)
 ```
 
 ## ✅ Step-by-step setup (recommended path)
@@ -113,8 +115,14 @@ npm run seed
 
 6) Run the app
 ```bash
+# API server
 npm run dev
-# Open: https://<your-codespace>-5000.app.github.dev
+
+# Frontend SPAs (in parallel)
+npm run dev:apps
+# Rider:  http://localhost:5173
+# Driver: http://localhost:5174
+# Admin:  http://localhost:5175
 ```
 
 7) Login flow (local)
@@ -204,14 +212,20 @@ Start command (Render):
 
 ## 📦 Build locally
 ```bash
+# Build API server bundle
 npm run build
+
+# Build all SPAs
+npm run build:apps
 ```
-Output: `EcoRideConnect/dist/public/` (client) and `EcoRideConnect/dist/index.js` (server bundle).
+Output: `EcoRideConnect/dist/index.js` (server bundle). SPA build outputs under each app's `dist/`.
 
 ## 📚 More docs
 - API quick setup: `API_SETUP_GUIDE.md`
 - Neon setup details: `NEON_SETUP_GUIDE.md`
 - Development notes: `DEVELOPMENT.md`
+
+Note: The legacy `client/` app has been fully split into three role-specific SPAs. Duplicate components were moved into `shared/`. Any remaining references to `client/` have been removed.
 
 ---
 Made with 💚 for a sustainable future
