@@ -1,5 +1,12 @@
 {
-  "include": ["client/src/**/*", "shared/**/*", "server/**/*"],
+  "include": [
+    "client/src/**/*",
+    "shared/**/*",
+    "server/**/*",
+    "rider-app/src/**/*",
+    "driver-app/src/**/*",
+    "admin-app/src/**/*"
+  ],
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "**/*_clean.tsx"],
   "compilerOptions": {
     "incremental": true,

@@ -1,6 +1,6 @@
-# RideConnect 🚗
+# Surya Ride 🚗
 
-Modern ride-hailing platform with a clean TypeScript stack. This guide walks you step-by-step through setup for backend, frontend, database, and credentials (without exposing real secrets).
+Reliable ride-sharing platform built on a clean TypeScript stack. This guide walks you step-by-step through setup for backend, frontend, database, and credentials (without exposing real secrets).
 
 ## 🚀 What's inside
 - Backend: Express + TypeScript + Drizzle ORM on Neon PostgreSQL
