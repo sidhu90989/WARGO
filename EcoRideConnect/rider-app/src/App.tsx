@@ -20,6 +20,7 @@ export default function App() {
             <Route path="/ride/:id" component={RideTrackPage as any} />
             <Route path="/payment" component={PaymentPage} />
             <Route path="/wallet" component={WalletPage} />
+            <Route path="/auth" component={require('./pages/AuthPage').default} />
             <Route>404 - Not Found</Route>
           </Switch>
         </Router>

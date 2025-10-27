@@ -16,6 +16,7 @@ export default function App() {
             <Route path="/earnings" component={DriverDashboard} />
             <Route path="/availability" component={DriverDashboard} />
             <Route path="/profile" component={DriverDashboard} />
+            <Route path="/auth" component={require('./pages/AuthPage').default} />
             <Route>404 - Not Found</Route>
           </Switch>
         </Router>

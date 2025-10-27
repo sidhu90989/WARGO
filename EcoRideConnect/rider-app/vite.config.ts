@@ -11,7 +11,7 @@ export default defineConfig({
       workbox: {
         clientsClaim: true,
         skipWaiting: true,
-        navigateFallback: '/index.html',
+        navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api\//, /\/ws(\/|$)/],
       },
       includeAssets: ['icons/icon-192x192.png','icons/icon-512x512.png'],
@@ -33,7 +33,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(import.meta.dirname, '..', 'client', 'src'),
+      '@': path.resolve(import.meta.dirname, 'src'),
       '@shared': path.resolve(import.meta.dirname, '..', 'shared'),
       '@types': path.resolve(import.meta.dirname, '..', 'shared', 'types'),
     },

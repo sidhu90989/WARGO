@@ -20,14 +20,21 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  // Choose which SPA to serve via the API dev server (rider|driver|admin)
+  const serveApp = process.env.SERVE_APP || "rider";
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true as const,
   };
+  // Use the selected app's directory as Vite root so imports like /src/main.tsx
+  // resolve correctly when serving through the API dev server.
+  const appRoot = path.resolve(import.meta.dirname, "..", `${serveApp}-app`);
 
   const vite = await createViteServer({
     ...viteConfig,
+    root: appRoot,
     configFile: false,
     customLogger: {
       ...viteLogger,
@@ -45,12 +52,26 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      // Allow serving one of the role-specific SPAs through the API dev server
+      // Set SERVE_APP to "rider", "driver", or "admin" to pick which SPA's index.html
+      const serveApp = process.env.SERVE_APP || "rider";
+      const candidatePaths = [
+        path.resolve(import.meta.dirname, "..", `${serveApp}-app`, "index.html"),
+        // legacy fallback for older repos
+        path.resolve(import.meta.dirname, "..", "client", "index.html"),
+      ];
+
+      let clientTemplate: string | undefined;
+      for (const p of candidatePaths) {
+        if (fs.existsSync(p)) {
+          clientTemplate = p;
+          break;
+        }
+      }
+
+      if (!clientTemplate) {
+        throw Object.assign(new Error("index.html not found for any SPA"), { code: "ENOENT" });
+      }
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
@@ -88,6 +109,7 @@ export async function setupVite(app: Express, server: Server) {
   </body>
 </html>`;
         return res.status(200).set({ "Content-Type": "text/html" }).end(page);
+        return res.status(200).set({ "Content-Type": "text/html" }).end(page);
       }
       vite.ssrFixStacktrace(err);
       next(err);
@@ -96,11 +118,20 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // Support serving one of the SPA builds directly from server on port 5000
+  // Specify APP_TARGET=rider|driver|admin to use EcoRideConnect/dist/<target>
+  const target = process.env.APP_TARGET as "rider" | "driver" | "admin" | undefined;
+  const spaDistPath = target
+    ? path.resolve(import.meta.dirname, "..", "dist", target)
+    : undefined;
+
+  const distPath = spaDistPath && fs.existsSync(spaDistPath)
+    ? spaDistPath
+    : path.resolve(import.meta.dirname, "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath}. Build the SPA (APP_TARGET=${target ?? 'rider|driver|admin'}) or the legacy client first.`,
     );
   }
 

@@ -17,6 +17,7 @@ export default function App() {
             <Route path="/analytics" component={AdminDashboard} />
             <Route path="/payments" component={AdminDashboard} />
             <Route path="/offers" component={AdminDashboard} />
+            <Route path="/auth" component={require('./pages/AuthPage').default} />
             <Route>404 - Not Found</Route>
           </Switch>
         </Router>
