@@ -23,6 +23,7 @@ import {
 } from "@shared/schema";
 import { customAlphabet } from "nanoid";
 import admin from "firebase-admin";
+import { ensureFirebaseAdmin } from "./firebaseAdmin";
 
 // Note: don't read SIMPLE_AUTH at module import time because dotenv may not be loaded yet.
 // We'll evaluate it at runtime inside getInstance().
@@ -107,9 +108,7 @@ export interface IStorage {
 // Firestore storage for production when using Firebase only
 class FirestoreStorage implements IStorage {
   private db = (() => {
-    if (!admin.apps.length) {
-      try { admin.initializeApp(); } catch { /* ignore */ }
-    }
+    ensureFirebaseAdmin();
     return admin.firestore();
   })();
 

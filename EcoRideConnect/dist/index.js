@@ -1,20 +1,84 @@
 // server/index.ts
-import { config as config3 } from "dotenv";
+import { config as config4 } from "dotenv";
 import express from "express";
 import cors from "cors";
 import session from "express-session";
 import MemoryStoreFactory from "memorystore";
 
 // server/routes.ts
-import { config as config2 } from "dotenv";
+import { config as config3 } from "dotenv";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 
 // server/storage.ts
-import { config } from "dotenv";
+import { config as config2 } from "dotenv";
 import { customAlphabet } from "nanoid";
+import admin2 from "firebase-admin";
+
+// server/firebaseAdmin.ts
+import { config } from "dotenv";
 import admin from "firebase-admin";
+import fs from "fs";
+import path from "path";
 config();
+function ensureFirebaseAdmin() {
+  if (admin.apps.length) {
+    return admin.app();
+  }
+  const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+  const saJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+  try {
+    if (projectId) {
+      process.env.GOOGLE_CLOUD_PROJECT = projectId;
+      process.env.GCLOUD_PROJECT = projectId;
+    }
+    if (keyPath) {
+      const resolved = path.isAbsolute(keyPath) ? keyPath : path.resolve(process.cwd(), keyPath);
+      const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
+      const pid = json.project_id || projectId;
+      const app3 = admin.initializeApp({
+        credential: admin.credential.cert(json),
+        projectId: pid
+      });
+      if (pid) {
+        process.env.GOOGLE_CLOUD_PROJECT = pid;
+        process.env.GCLOUD_PROJECT = pid;
+      }
+      return app3;
+    }
+    if (saJson) {
+      const json = JSON.parse(saJson);
+      const pid = json.project_id || projectId;
+      const app3 = admin.initializeApp({
+        credential: admin.credential.cert(json),
+        projectId: pid
+      });
+      if (pid) {
+        process.env.GOOGLE_CLOUD_PROJECT = pid;
+        process.env.GCLOUD_PROJECT = pid;
+      }
+      return app3;
+    }
+    if (projectId && clientEmail && privateKey) {
+      const app3 = admin.initializeApp({
+        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+        projectId
+      });
+      return app3;
+    }
+    const app2 = admin.initializeApp();
+    return app2;
+  } catch (e) {
+    console.error("[firebase-admin] initialization failed:", e);
+    throw e;
+  }
+}
+
+// server/storage.ts
+config2();
 console.log(`[storage] module initialized. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} DATABASE_URL=${process.env.DATABASE_URL ? "SET" : "MISSING"}`);
 var StorageSelector = class {
   static instance;
@@ -38,13 +102,8 @@ var StorageSelector = class {
 };
 var FirestoreStorage = class {
   db = (() => {
-    if (!admin.apps.length) {
-      try {
-        admin.initializeApp();
-      } catch {
-      }
-    }
-    return admin.firestore();
+    ensureFirebaseAdmin();
+    return admin2.firestore();
   })();
   col(name) {
     return this.db.collection(name);
@@ -432,9 +491,7 @@ var storage = StorageSelector.getInstance();
 
 // server/routes.ts
 import Stripe from "stripe";
-import admin2 from "firebase-admin";
-import fs from "fs";
-import path from "path";
+import admin3 from "firebase-admin";
 
 // server/integrations/nameApi.ts
 function getEnv() {
@@ -477,7 +534,7 @@ var nameApi = {
 var nameApi_default = nameApi;
 
 // server/routes.ts
-config2();
+config3();
 var SIMPLE_AUTH = process.env.SIMPLE_AUTH === "true";
 console.log("\u{1F527} Environment check:", {
   SIMPLE_AUTH,
@@ -485,36 +542,7 @@ console.log("\u{1F527} Environment check:", {
   NODE_ENV: process.env.NODE_ENV
 });
 if (!SIMPLE_AUTH) {
-  if (!admin2.apps.length) {
-    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
-    const saJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
-    try {
-      if (keyPath) {
-        const resolved = path.isAbsolute(keyPath) ? keyPath : path.resolve(process.cwd(), keyPath);
-        const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
-        admin2.initializeApp({ credential: admin2.credential.cert(json) });
-      } else if (saJson) {
-        const json = JSON.parse(saJson);
-        admin2.initializeApp({ credential: admin2.credential.cert(json) });
-      } else if (projectId && clientEmail && privateKey) {
-        admin2.initializeApp({
-          credential: admin2.credential.cert({
-            projectId,
-            clientEmail,
-            privateKey
-          })
-        });
-      } else {
-        admin2.initializeApp();
-      }
-    } catch (e) {
-      console.error("[firebase-admin] initialization failed:", e);
-      throw e;
-    }
-  }
+  ensureFirebaseAdmin();
 }
 var stripe = (() => {
   if (SIMPLE_AUTH) return null;
@@ -532,13 +560,14 @@ async function verifyFirebaseToken(req, res, next) {
   if (SIMPLE_AUTH) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  ensureFirebaseAdmin();
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   const token = authHeader.substring(7);
   try {
-    const decodedToken = await admin2.auth().verifyIdToken(token);
+    const decodedToken = await admin3.auth().verifyIdToken(token);
     req.firebaseUid = decodedToken.uid;
     req.email = decodedToken.email;
     next();
@@ -966,7 +995,7 @@ async function registerRoutes(app2) {
   };
   if (!SIMPLE_AUTH) {
     try {
-      const db = admin2.firestore();
+      const db = admin3.firestore();
       const broadcast2 = (msg) => {
         const json = JSON.stringify(msg);
         wss.clients.forEach((client) => {
@@ -1037,7 +1066,7 @@ async function registerRoutes(app2) {
 }
 
 // server/index.ts
-config3();
+config4();
 var app = express();
 function log(message, source = "express") {
   const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {

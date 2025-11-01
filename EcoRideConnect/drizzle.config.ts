@@ -1,5 +1,4 @@
-/// <reference types="node" />
-// Drizzle/SQL configuration is deprecated.
-// Firestore is the only supported database now. This file is kept as a stub
-// to avoid tool errors if referenced. No configuration is exported.
-export {};
+// Deprecated: SQL/Drizzle config is no longer used.
+// EcoRideConnect now uses Firebase Firestore as the only database.
+// This file remains to avoid breaking scripts that might import it.
+export default {} as any;

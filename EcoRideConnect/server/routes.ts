@@ -7,6 +7,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import Stripe from "stripe";
 import admin from "firebase-admin";
+import { ensureFirebaseAdmin } from "./firebaseAdmin";
 import fs from "fs";
 import path from "path";
 import nameApi from "./integrations/nameApi";
@@ -21,54 +22,7 @@ console.log("🔧 Environment check:", {
 
 // Initialize Firebase Admin unless using SIMPLE_AUTH
 if (!SIMPLE_AUTH) {
-  if (!admin.apps.length) {
-    // Prefer explicit service account if provided (local/prod friendly), else fallback to ADC
-    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
-    const saJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    // Private key may contain escaped newlines when injected from env; normalize them
-    const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
-
-    try {
-      if (projectId) {
-        process.env.GOOGLE_CLOUD_PROJECT = projectId;
-        process.env.GCLOUD_PROJECT = projectId;
-      }
-      if (keyPath) {
-        const resolved = path.isAbsolute(keyPath)
-          ? keyPath
-          : path.resolve(process.cwd(), keyPath);
-        const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
-        admin.initializeApp({
-          credential: admin.credential.cert(json as any),
-          projectId: (json as any).project_id || projectId,
-        });
-      } else if (saJson) {
-        const json = JSON.parse(saJson);
-        admin.initializeApp({
-          credential: admin.credential.cert(json as any),
-          projectId: (json as any).project_id || projectId,
-        });
-      } else if (projectId && clientEmail && privateKey) {
-        admin.initializeApp({
-          credential: admin.credential.cert({
-            projectId,
-            clientEmail,
-            privateKey,
-          } as any),
-          projectId,
-        });
-      } else {
-        // Application Default Credentials (e.g., when running on GCP)
-        admin.initializeApp();
-      }
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error("[firebase-admin] initialization failed:", e);
-      throw e;
-    }
-  }
+  ensureFirebaseAdmin();
 }
 
 // Initialize Stripe only if not SIMPLE_AUTH
@@ -96,6 +50,9 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // Ensure admin SDK is ready in full mode
+  ensureFirebaseAdmin();
+  
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
