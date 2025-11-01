@@ -5,7 +5,9 @@ import path from "path";
 
 export default defineConfig({
   plugins: [
-    react(),
+  // Disable React Fast Refresh to avoid inline preamble script blocked by CSP in hosted previews
+  // @ts-ignore fastRefresh may not be declared in the published types but is supported at runtime
+  react({ fastRefresh: false } as any),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
@@ -58,6 +60,7 @@ export default defineConfig({
   base: process.env.VITE_BASE_PATH || "/",
   server: {
     port: 5175,
+    host: true,
     open: false,
   },
 });

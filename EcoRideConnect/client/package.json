@@ -1,0 +1,10 @@
+{
+  "name": "ecoride-client",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host --port 5172",
+    "build": "vite build",
+    "preview": "vite preview --port 5172 --host"
+  }
+}
