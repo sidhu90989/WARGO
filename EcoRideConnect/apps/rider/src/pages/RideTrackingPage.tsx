@@ -25,6 +25,8 @@ import { useLocation, useParams } from "wouter";
 import { RideMap } from "@/components/maps/RideMap";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { FullScreenLayout } from "@/components/layout/FullScreenLayout";
+import { Home, History, Wallet, User as UserIcon } from "lucide-react";
 
 interface DriverInfo {
   id: string;
@@ -147,49 +149,43 @@ export default function RideTrackingPage() {
     }
   };
 
+  const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setLocation("/rider")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="font-serif text-xl font-bold">Your Ride</h1>
-              <p className="text-sm text-muted-foreground">ID: {rideInfo.rideId}</p>
-            </div>
-          </div>
-          
-          {/* SOS Button */}
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleSOS}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            <AlertTriangle className="w-4 h-4 mr-1" />
-            SOS
+    <FullScreenLayout
+      header={{
+        title: "Your Ride",
+        leftActions: (
+          <Button size="icon" variant="ghost" onClick={() => setLocation("/rider")}>
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-        </div>
-      </header>
-
+        ),
+        rightActions: (
+          <Button variant="destructive" size="sm" onClick={handleSOS} className="bg-red-600 hover:bg-red-700">
+            <AlertTriangle className="w-4 h-4 mr-1" /> SOS
+          </Button>
+        ),
+      }}
+      bottomNav={[
+        { label: "Home", href: "/rider", icon: <Home className="h-5 w-5" /> },
+        { label: "Rides", href: "/rider/history", icon: <History className="h-5 w-5" /> },
+        { label: "Wallet", href: "/rider/wallet", icon: <Wallet className="h-5 w-5" /> },
+        { label: "Profile", href: "/rider/profile", icon: <UserIcon className="h-5 w-5" /> },
+      ]}
+    >
       <div className="space-y-4">
         {/* Live Map */}
         <div className="h-80 relative">
-          <RideMap
-            apiKey="mock-api-key"
-            pickup={{ lat: 28.6139, lng: 77.2090 }}
-            dropoff={{ lat: 28.7041, lng: 77.1025 }}
-            rider={{ lat: 28.6139, lng: 77.2090 }}
-            driver={driverInfo.currentLocation}
-            height={320}
-          />
+          {mapsKey && (
+            <RideMap
+              apiKey={mapsKey}
+              pickup={{ lat: 28.6139, lng: 77.2090 }}
+              dropoff={{ lat: 28.7041, lng: 77.1025 }}
+              rider={{ lat: 28.6139, lng: 77.2090 }}
+              driver={driverInfo.currentLocation}
+              height={320}
+              mapTheme="dark"
+            />
+          )}
           
           {/* Status Overlay */}
           <div className="absolute top-4 left-4 right-4">
@@ -407,6 +403,6 @@ export default function RideTrackingPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </FullScreenLayout>
   );
 }

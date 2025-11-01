@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { RideCard } from "@/components/RideCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home, History, Wallet, User } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Ride } from "@shared/schema";
+import { FullScreenLayout } from "@/components/layout/FullScreenLayout";
 
 export default function RideHistoryPage() {
   const [, setLocation] = useLocation();
@@ -14,9 +15,10 @@ export default function RideHistoryPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-card border-b">
-        <div className="flex items-center gap-4 px-4 py-3">
+    <FullScreenLayout
+      header={{
+        title: "Ride History",
+        leftActions: (
           <Button
             size="icon"
             variant="ghost"
@@ -25,10 +27,15 @@ export default function RideHistoryPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-serif text-xl font-bold">Ride History</h1>
-        </div>
-      </header>
-
+        ),
+      }}
+      bottomNav={[
+        { label: "Home", href: "/rider", icon: <Home className="h-5 w-5" /> },
+        { label: "Rides", href: "/rider/history", icon: <History className="h-5 w-5" /> },
+        { label: "Wallet", href: "/rider/wallet", icon: <Wallet className="h-5 w-5" /> },
+        { label: "Profile", href: "/rider/profile", icon: <User className="h-5 w-5" /> },
+      ]}
+    >
       <div className="p-4 max-w-4xl mx-auto space-y-4">
         {isLoading ? (
           <div className="py-12">
@@ -51,6 +58,6 @@ export default function RideHistoryPage() {
           </div>
         )}
       </div>
-    </div>
+    </FullScreenLayout>
   );
 }

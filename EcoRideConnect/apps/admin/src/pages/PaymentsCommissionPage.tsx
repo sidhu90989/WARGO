@@ -25,6 +25,9 @@ import {
   ArrowRightLeft,
   Wallet
 } from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useLocation } from "wouter";
+import { Activity, Users as UsersIcon, Gift, BarChart3 } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -63,6 +66,7 @@ interface FinancialSummary {
 }
 
 export default function PaymentsCommissionPage() {
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("today");
   const [refundAmount, setRefundAmount] = useState("");
@@ -196,12 +200,12 @@ export default function PaymentsCommissionPage() {
       completed: "default",
       pending: "secondary",
       processing: "outline",
-      failed: "destructive"
+      failed: "destructive",
     } as const;
-    
+    const label = status.charAt(0).toUpperCase() + status.slice(1);
     return (
-      <Badge variant={variants[status as keyof typeof variants] || "secondary"}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <Badge variant={variants[status as keyof typeof variants] ?? "secondary"} className="flex items-center gap-1">
+        {getStatusIcon(status)} {label}
       </Badge>
     );
   };
@@ -234,16 +238,30 @@ export default function PaymentsCommissionPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background p-4 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payments & Commission</h1>
-          <p className="text-muted-foreground">
-            Manage transactions, payouts, and financial operations
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <DashboardLayout
+      header={{
+        title: "Payments & Commission",
+        rightActions: (
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline">
+              <Download className="h-4 w-4 mr-2" /> Export
+            </Button>
+          </div>
+        ),
+      }}
+      sidebar={{
+        items: [
+          { label: "Overview", href: "/admin", icon: <Activity className="h-5 w-5" /> },
+          { label: "Users & Drivers", href: "/admin/users", icon: <UsersIcon className="h-5 w-5" /> },
+          { label: "Payments", href: "/admin/payments", icon: <DollarSign className="h-5 w-5" /> },
+          { label: "Offers", href: "/admin/offers", icon: <Gift className="h-5 w-5" /> },
+          { label: "Analytics", href: "/admin/analytics", icon: <BarChart3 className="h-5 w-5" /> },
+        ],
+        onNavigate: (href) => setLocation(href),
+      }}
+    >
+      <div className="space-y-6">
+        <div className="flex justify-end items-center">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -255,12 +273,7 @@ export default function PaymentsCommissionPage() {
               <SelectItem value="year">This Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
         </div>
-      </div>
 
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -428,6 +441,7 @@ export default function PaymentsCommissionPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

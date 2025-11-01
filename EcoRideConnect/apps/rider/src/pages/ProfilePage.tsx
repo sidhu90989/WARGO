@@ -21,10 +21,14 @@ import {
   Edit,
   Trash2,
   Plus,
-  AlertTriangle
+  AlertTriangle,
+  Home,
+  History,
+  Wallet
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { FullScreenLayout } from "@/components/layout/FullScreenLayout";
 
 interface EmergencyContact {
   id: string;
@@ -122,31 +126,32 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setLocation("/rider")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="font-serif text-xl font-bold">Profile & Settings</h1>
-          </div>
+    <FullScreenLayout
+      header={{
+        title: "Profile & Settings",
+        leftActions: (
+          <Button size="icon" variant="ghost" onClick={() => setLocation("/rider")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        ),
+        rightActions: (
           <Button
             size="sm"
             variant={editing ? "default" : "outline"}
-            onClick={() => editing ? handleSaveProfile() : setEditing(true)}
+            onClick={() => (editing ? handleSaveProfile() : setEditing(true))}
           >
             <Edit className="w-4 h-4 mr-1" />
             {editing ? "Save" : "Edit"}
           </Button>
-        </div>
-      </header>
-
+        ),
+      }}
+      bottomNav={[
+        { label: "Home", href: "/rider", icon: <Home className="h-5 w-5" /> },
+        { label: "Rides", href: "/rider/history", icon: <History className="h-5 w-5" /> },
+        { label: "Wallet", href: "/rider/wallet", icon: <Wallet className="h-5 w-5" /> },
+        { label: "Profile", href: "/rider/profile", icon: <User className="h-5 w-5" /> },
+      ]}
+    >
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
         {/* Profile Picture & Basic Info */}
         <Card className="p-6">
@@ -482,6 +487,6 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </FullScreenLayout>
   );
 }

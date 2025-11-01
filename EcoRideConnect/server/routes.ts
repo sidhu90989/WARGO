@@ -140,6 +140,8 @@ function generateReferralCode(name: string): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Simple broadcast function wired after WebSocket server is created
+  let broadcast: (msg: any) => void = () => {};
   // Enable simple auth routes either when SIMPLE_AUTH=true or when explicitly
   // allowed via env for hybrid development with a real database.
   if (SIMPLE_AUTH || process.env.ALLOW_SIMPLE_AUTH_ROUTES === 'true') {
@@ -341,6 +343,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ecoPointsEarned: ecoPoints,
       });
 
+      // In SIMPLE_AUTH or when Firestore bridge isn't available, emit WS event here
+      try { broadcast({ type: 'ride_added', ride }); } catch {}
       res.json(ride);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -393,7 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'accepted',
         acceptedAt: new Date(),
       });
-
+      try { broadcast({ type: 'ride_updated', ride: updatedRide }); } catch {}
       res.json(updatedRide);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -435,6 +439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      try { broadcast({ type: 'ride_updated', ride: updatedRide }); } catch {}
       res.json(updatedRide);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -458,6 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'in_progress',
         startedAt: new Date(),
       });
+      try { broadcast({ type: 'ride_updated', ride: updated }); } catch {}
       res.json(updated);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -594,6 +600,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // Wire broadcast now that wss is ready
+  broadcast = (msg: any) => {
+    const json = JSON.stringify(msg);
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) client.send(json);
+    });
+  };
 
   // Firestore → WebSocket realtime bridge (when in full mode)
   if (!SIMPLE_AUTH) {

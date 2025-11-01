@@ -16,10 +16,14 @@ import {
   Gift,
   Banknote,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Home,
+  History,
+  User
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { FullScreenLayout } from "@/components/layout/FullScreenLayout";
 
 interface Transaction {
   id: string;
@@ -124,21 +128,22 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b">
-        <div className="flex items-center gap-4 px-4 py-3">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setLocation("/rider")}
-          >
+    <FullScreenLayout
+      header={{
+        title: "Wallet & Offers",
+        leftActions: (
+          <Button size="icon" variant="ghost" onClick={() => setLocation("/rider")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-serif text-xl font-bold">Wallet & Offers</h1>
-        </div>
-      </header>
-
+        ),
+      }}
+      bottomNav={[
+        { label: "Home", href: "/rider", icon: <Home className="h-5 w-5" /> },
+        { label: "Rides", href: "/rider/history", icon: <History className="h-5 w-5" /> },
+        { label: "Wallet", href: "/rider/wallet", icon: <Wallet className="h-5 w-5" /> },
+        { label: "Profile", href: "/rider/profile", icon: <User className="h-5 w-5" /> },
+      ]}
+    >
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
         {/* Wallet Balance */}
         <Card className="p-6 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
@@ -351,6 +356,6 @@ export default function WalletPage() {
           </ul>
         </Card>
       </div>
-    </div>
+    </FullScreenLayout>
   );
 }
