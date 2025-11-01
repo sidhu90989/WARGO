@@ -398,79 +398,25 @@ export default function AdminDashboard() {
                   pickup={activeRides[0]?.currentLocation}
                   dropoff={activeRides[0]?.dropoff}
                   rider={activeRides[0]?.currentLocation}
-                  driver={activeRides[0]?.driverLocation}
                 />
               )}
             </div>
-            
             {/* Active Rides List */}
             <div className="space-y-3">
-              {activeRides && activeRides.length > 0 ? (
-                <div className="space-y-3">
-                  {activeRides.map((ride: any) => (
-                    <div 
-                      key={ride.id} 
-                      className="p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                      data-testid={`active-ride-${ride.id}`}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-medium">Ride #{ride.id}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {ride.pickupLocation} → {ride.dropoffLocation}
-                          </p>
-                        </div>
-                        <Badge variant={ride.status === 'in_progress' ? 'default' : 'secondary'}>
-                          {ride.status}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Est. Fare: ₹{ride.estimatedFare}</span>
-                        <span className="text-muted-foreground">{ride.vehicleType}</span>
-                      </div>
+              {activeRides.map((ride) => (
+                <Card key={ride.id} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{ride.pickupLocation} → {ride.dropoffLocation}</div>
+                      <div className="text-xs text-muted-foreground">{ride.vehicleType}</div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Car className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No active rides at the moment</p>
-                </div>
-              )}
+                    <Badge variant="secondary">{ride.status}</Badge>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
         </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button
-            variant="outline"
-            className="h-20"
-            onClick={() => setLocation("/admin/users")}
-            data-testid="button-manage-users"
-          >
-            <Users className="h-5 w-5 mr-2" />
-            Manage Users
-          </Button>
-          <Button
-            variant="outline"
-            className="h-20"
-            onClick={() => setLocation("/admin/drivers")}
-            data-testid="button-manage-drivers"
-          >
-            <Car className="h-5 w-5 mr-2" />
-            Manage Drivers
-          </Button>
-          <Button
-            variant="outline"
-            className="h-20"
-            onClick={() => setLocation("/admin/analytics")}
-            data-testid="button-analytics"
-          >
-            <TrendingUp className="h-5 w-5 mr-2" />
-            View Analytics
-          </Button>
-        </div>
       </div>
     </div>
   );

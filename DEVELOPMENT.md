@@ -21,30 +21,53 @@ npm run db:push
 ```
 
 4. **Start Development**
+
+Server (API-only):
 ```bash
 npm run dev
 ```
 
+Frontend apps (run each independently in a separate terminal):
+```bash
+# Rider app
+npm run rider:dev
+
+# Driver app
+npm run driver:dev
+
+# Admin app
+npm run admin:dev
+```
+
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run check` - Run TypeScript type checking
-- `npm run db:push` - Push database schema changes
+- `npm run dev` - Start the API-only server (Express)
+- `npm run start` - Start production API server (after build)
+- `npm run build` - Bundle API server (esbuild)
+- `npm run check` - Run TypeScript type checking across server, client shared, and apps
+- `npm run db:push` - Push database schema changes (Drizzle)
+- `npm run rider:dev` - Start Rider app (Vite)
+- `npm run driver:dev` - Start Driver app (Vite)
+- `npm run admin:dev` - Start Admin app (Vite)
+- `npm run rider:build` - Build Rider app (Vite)
+- `npm run driver:build` - Build Driver app (Vite)
+- `npm run admin:build` - Build Admin app (Vite)
 
 ## Project Architecture
 
 ### Frontend (React + TypeScript)
-- **Components**: Reusable UI components in `/client/src/components`
-- **Pages**: Route-level components in `/client/src/pages`
-- **Hooks**: Custom React hooks in `/client/src/hooks`
-- **Contexts**: React context providers in `/client/src/contexts`
+- Three independent apps under `/EcoRideConnect/apps`:
+	- `apps/rider` – Rider-facing app
+	- `apps/driver` – Driver-facing app
+	- `apps/admin` – Admin dashboard
+- Shared UI/components live in `/EcoRideConnect/client/src/components`, contexts/hooks in `/EcoRideConnect/client/src/{contexts,hooks}`
+- Shared pages still referenced by apps: `/client/src/pages/LoginPage.tsx`, `/client/src/pages/NotFoundPage.tsx`
 
 ### Backend (Express + TypeScript)
-- **Server**: Main server logic in `/server`
-- **Database**: Drizzle ORM with PostgreSQL
-- **Routes**: API endpoints in `/server/routes.ts`
+- API-only server in `/server` (does not serve static SPA assets)
+- CORS configured for per-app origins via `FRONTEND_ORIGIN`
+- Database: Drizzle ORM with PostgreSQL (Neon) when `SIMPLE_AUTH=false`
+- Routes: `/server/routes.ts` (auth, rider/driver/admin, Stripe, WS)
 
 ### Shared
 - **Schema**: Database schema in `/shared/schema.ts`
@@ -69,7 +92,7 @@ npm run dev
 
 The app automatically deploys to GitHub Pages when you push to main branch.
 
-**Live Demo**: [https://sidhu90989.github.io/Echo-Ride/](https://sidhu90989.github.io/Echo-Ride/)
+Note: The previous unified single-page app has been removed. Use the per-app scripts above for local development and deployment.
 
 ### PR Preview Databases (Neon)
 

@@ -6,9 +6,19 @@ import cors from "cors";
 import session from "express-session";
 import MemoryStoreFactory from "memorystore";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+  // eslint-disable-next-line no-console
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
 // Trust the first proxy (required for secure cookies behind proxies like Codespaces)
 app.set('trust proxy', 1);
 app.use(express.json());
@@ -76,6 +86,7 @@ app.use((req, res, next) => {
   next();
 });
 
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -87,14 +98,8 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // Frontend is now served by per-app dev servers / static hosts.
+  // The API server no longer serves the client assets.
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.

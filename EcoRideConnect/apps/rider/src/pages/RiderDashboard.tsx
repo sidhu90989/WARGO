@@ -64,7 +64,6 @@ export default function RiderDashboard() {
     enabled: !!user,
   });
 
-  // Vehicle options with comprehensive details
   const vehicleOptions = [
     {
       id: "cng_car" as VehicleType,
@@ -101,7 +100,6 @@ export default function RiderDashboard() {
     }
   ];
 
-  // Mock rider stats
   const mockStats: RiderStats = {
     totalRides: 127,
     ecoPoints: 1250,
@@ -118,8 +116,6 @@ export default function RiderDashboard() {
       });
       return;
     }
-
-    // Navigate to confirm ride page
     setLocation("/rider/confirm");
   };
 
@@ -178,7 +174,6 @@ export default function RiderDashboard() {
       </header>
 
       <div className="p-4 space-y-6">
-        {/* Navigation Menu */}
         {showMenu && (
           <Card className="p-4">
             <div className="grid grid-cols-2 gap-4">
@@ -198,7 +193,6 @@ export default function RiderDashboard() {
                   <span className="text-xs text-muted-foreground">View past rides</span>
                 </div>
               </Button>
-              
               <Button 
                 variant="ghost" 
                 className="justify-start h-auto p-4"
@@ -215,7 +209,6 @@ export default function RiderDashboard() {
                   <span className="text-xs text-muted-foreground">Earn green points</span>
                 </div>
               </Button>
-              
               <Button 
                 variant="ghost" 
                 className="justify-start h-auto p-4"
@@ -232,7 +225,6 @@ export default function RiderDashboard() {
                   <span className="text-xs text-muted-foreground">Payment & deals</span>
                 </div>
               </Button>
-              
               <Button 
                 variant="ghost" 
                 className="justify-start h-auto p-4"
@@ -249,7 +241,6 @@ export default function RiderDashboard() {
                   <span className="text-xs text-muted-foreground">Account settings</span>
                 </div>
               </Button>
-              
               <Button 
                 variant="ghost" 
                 className="justify-start h-auto p-4"
@@ -266,7 +257,6 @@ export default function RiderDashboard() {
                   <span className="text-xs text-muted-foreground">Find nearby stations</span>
                 </div>
               </Button>
-              
               <Button 
                 variant="ghost" 
                 className="justify-start h-auto p-4"
@@ -284,7 +274,6 @@ export default function RiderDashboard() {
                 </div>
               </Button>
             </div>
-            
             <div className="mt-4 pt-4 border-t">
               <Button 
                 variant="ghost" 
@@ -299,7 +288,6 @@ export default function RiderDashboard() {
           </Card>
         )}
 
-        {/* Eco Impact Stats */}
         <EcoImpactCard
           co2Saved={Number((stats?.totalCO2Saved ?? mockStats.totalCO2Saved) as number)}
           ecoPoints={stats?.ecoPoints ?? mockStats.ecoPoints}
@@ -307,63 +295,36 @@ export default function RiderDashboard() {
           nextBadgePoints={2000}
         />
 
-        {/* Quick Booking */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <MapPin className="h-6 w-6 text-primary" />
             <h2 className="font-serif text-xl font-semibold">Book Your Eco Ride</h2>
           </div>
-          
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="pickup">From</Label>
-              <Input
-                id="pickup"
-                placeholder="Enter pickup location"
-                value={pickupLocation}
-                onChange={(e) => setPickupLocation(e.target.value)}
-              />
+              <Input id="pickup" placeholder="Enter pickup location" value={pickupLocation} onChange={(e) => setPickupLocation(e.target.value)} />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="destination">To</Label>
-              <Input
-                id="destination"
-                placeholder="Enter destination"
-                value={destination}  
-                onChange={(e) => setDestination(e.target.value)}
-              />
+              <Input id="destination" placeholder="Enter destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
             </div>
-            
-            <Button 
-              className="w-full" 
-              size="lg"
-              onClick={handleBookRide}
-            >
+            <Button className="w-full" size="lg" onClick={handleBookRide}>
               <Navigation className="h-4 w-4 mr-2" />
               Find Eco Rides
             </Button>
           </div>
         </Card>
 
-        {/* Vehicle Options */}
         <div className="space-y-4">
           <h3 className="font-serif text-lg font-semibold">Choose Your Green Ride</h3>
           <div className="grid grid-cols-1 gap-4">
             {vehicleOptions.map((vehicle) => (
-              <VehicleCard
-                key={vehicle.id}
-                type={vehicle.id}
-                selected={selectedVehicleType === vehicle.id}
-                onSelect={() => setSelectedVehicleType(vehicle.id)}
-                estimatedFare={vehicle.fare}
-                eta={vehicle.eta}
-              />
+              <VehicleCard key={vehicle.id} type={vehicle.id} selected={selectedVehicleType === vehicle.id} onSelect={() => setSelectedVehicleType(vehicle.id)} estimatedFare={vehicle.fare} eta={vehicle.eta} />
             ))}
           </div>
         </div>
 
-        {/* Map Integration */}
         {mapsKey && (
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
@@ -374,17 +335,11 @@ export default function RiderDashboard() {
               </Badge>
             </div>
             <div className="h-80 rounded-lg overflow-hidden">
-              <RideMap
-                apiKey={mapsKey!}
-                rider={riderLoc || { lat: 28.6139, lng: 77.2090 }}
-                autoFit={false}
-                height={320}
-              />
+              <RideMap apiKey={mapsKey!} rider={riderLoc || { lat: 28.6139, lng: 77.2090 }} autoFit={false} height={320} />
             </div>
           </Card>
         )}
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-4">
           <Button variant="outline" size="lg" onClick={() => setLocation("/rider/history")}>
             <History className="h-4 w-4 mr-2" />
@@ -397,7 +352,6 @@ export default function RiderDashboard() {
         </div>
       </div>
 
-      {/* Booking Dialog */}
       <Dialog open={showBooking} onOpenChange={setShowBooking}>
         <DialogContent>
           <DialogHeader>
@@ -410,15 +364,7 @@ export default function RiderDashboard() {
                 {vehicleOptions.map((vehicle) => {
                   const IconComponent = vehicle.icon;
                   return (
-                    <div
-                      key={vehicle.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedVehicle === vehicle.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:bg-muted/50'
-                      }`}
-                      onClick={() => setSelectedVehicle(vehicle.id)}
-                    >
+                    <div key={vehicle.id} className={`p-3 border rounded-lg cursor-pointer transition-colors ${selectedVehicle === vehicle.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'}`} onClick={() => setSelectedVehicle(vehicle.id)}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <IconComponent className="h-5 w-5" />
@@ -437,14 +383,9 @@ export default function RiderDashboard() {
                 })}
               </div>
             </div>
-            
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowBooking(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={handleBookRide} className="flex-1">
-                Confirm Booking
-              </Button>
+              <Button variant="outline" onClick={() => setShowBooking(false)} className="flex-1">Cancel</Button>
+              <Button onClick={handleBookRide} className="flex-1">Confirm Booking</Button>
             </div>
           </div>
         </DialogContent>

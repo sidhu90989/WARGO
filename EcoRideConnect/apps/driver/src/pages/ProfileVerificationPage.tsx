@@ -502,206 +502,37 @@ export default function ProfileVerificationPage() {
                   </div>
                   <div>
                     <Label>Fuel Type</Label>
-                    <Select value={driverProfile.vehicle.fuelType} disabled={!isEditing}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="petrol">Petrol</SelectItem>
-                        <SelectItem value="diesel">Diesel</SelectItem>
-                        <SelectItem value="electric">Electric</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              <Separator className="my-6" />
-
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <Label>Vehicle Images</Label>
-                  {isEditing && (
-                    <Button size="sm" variant="outline">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Photo
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {driverProfile.vehicle.images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <img 
-                        src={image} 
-                        alt={`Vehicle ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border"
-                      />
-                      {isEditing && (
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-
-            {/* Safety Training */}
-            <Card className="p-6">
-              <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
-                <BookOpen className="h-6 w-6 text-primary" />
-                Safety Training
-              </h3>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                    <div>
-                      <div className="font-medium">Driver Safety Training</div>
-                      <div className="text-sm text-muted-foreground">Completed on {driverProfile.safety.lastTrainingDate}</div>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Completed
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                    <div>
-                      <div className="font-medium">Emergency Response Training</div>
-                      <div className="text-sm text-muted-foreground">Last updated 6 months ago</div>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Certified
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="text-center p-6 border-2 border-dashed border-muted rounded-lg">
-                    <Award className="h-12 w-12 mx-auto mb-3 text-primary" />
-                    <div className="text-lg font-bold text-primary">Training Score: {driverProfile.safety.trainingScore}%</div>
-                    <div className="text-sm text-muted-foreground">Excellent performance</div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
-                    <div>
-                      <div className="font-medium">First Aid Certification</div>
-                      <div className="text-sm text-muted-foreground">Recommended but not required</div>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      Get Certified
-                    </Button>
+                    <Input 
+                      value={driverProfile.vehicle.fuelType}
+                      disabled={!isEditing}
+                      className="mt-1"
+                    />
                   </div>
                 </div>
               </div>
             </Card>
           </TabsContent>
 
-          {/* Performance & Reviews */}
+          {/* Performance */}
           <TabsContent value="performance" className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="p-6 text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Star className="h-8 w-8 text-primary" />
-                </div>
-                <div className="text-3xl font-bold text-primary">{driverProfile.performance.rating}</div>
-                <div className="text-sm text-muted-foreground">Overall Rating</div>
-              </Card>
-
-              <Card className="p-6 text-center">
-                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Car className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="text-3xl font-bold text-blue-600">{driverProfile.performance.totalRides}</div>
-                <div className="text-sm text-muted-foreground">Total Rides</div>
-              </Card>
-
-              <Card className="p-6 text-center">
-                <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <TrendingUp className="h-8 w-8 text-green-600" />
-                </div>
-                <div className="text-3xl font-bold text-green-600">₹{driverProfile.performance.totalEarnings.toLocaleString()}</div>
-                <div className="text-sm text-muted-foreground">Total Earnings</div>
-              </Card>
-            </div>
-
             <Card className="p-6">
-              <h3 className="text-xl font-bold mb-6">Performance Metrics</h3>
-              
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Acceptance Rate</span>
-                      <span className="font-medium">{driverProfile.performance.acceptanceRate}%</span>
-                    </div>
-                    <Progress value={driverProfile.performance.acceptanceRate} className="h-2" />
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Cancellation Rate</span>
-                      <span className="font-medium">{driverProfile.performance.cancellationRate}%</span>
-                    </div>
-                    <Progress value={driverProfile.performance.cancellationRate} className="h-2" />
-                  </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">₹{driverProfile.performance.totalEarnings}</div>
+                  <div className="text-xs text-muted-foreground">Total Earnings</div>
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                    <span className="text-sm font-medium">Monthly Goal Progress</span>
-                    <Badge className="bg-green-100 text-green-800">85% Complete</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                    <span className="text-sm font-medium">This Month's Rank</span>
-                    <Badge className="bg-blue-100 text-blue-800">#12 in City</Badge>
-                  </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{driverProfile.performance.totalRides}</div>
+                  <div className="text-xs text-muted-foreground">Total Rides</div>
                 </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <MessageSquare className="h-6 w-6 text-primary" />
-                  Recent Reviews
-                </h3>
-                <Button variant="ghost" size="sm">View All</Button>
-              </div>
-              
-              <div className="space-y-4">
-                {[1, 2, 3].map((_, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <User className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <div className="font-medium">Anonymous Rider</div>
-                          <div className="text-xs text-muted-foreground">2 days ago</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-3 w-3 text-yellow-500 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Great driver! Very professional and courteous. The car was clean and the ride was smooth.
-                    </p>
-                  </div>
-                ))}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-yellow-600">{driverProfile.performance.rating}</div>
+                  <div className="text-xs text-muted-foreground">Rating</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{driverProfile.performance.acceptanceRate}%</div>
+                  <div className="text-xs text-muted-foreground">Acceptance Rate</div>
+                </div>
               </div>
             </Card>
           </TabsContent>

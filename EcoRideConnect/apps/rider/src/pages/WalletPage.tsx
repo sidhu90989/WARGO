@@ -144,7 +144,7 @@ export default function WalletPage() {
         <Card className="p-6 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items<center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
                 <span className="text-sm opacity-90">EcoRide Wallet</span>
               </div>
@@ -159,7 +159,7 @@ export default function WalletPage() {
                   // Scroll to add money section
                   document.getElementById('add-money')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                className="bg:white/20 hover:bg-white/30 text-white border-white/30"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add Money

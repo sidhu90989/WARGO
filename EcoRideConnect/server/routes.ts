@@ -7,6 +7,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import Stripe from "stripe";
 import admin from "firebase-admin";
+import fs from "fs";
+import path from "path";
 import nameApi from "./integrations/nameApi";
 
 // Flags
@@ -20,7 +22,25 @@ console.log("🔧 Environment check:", {
 // Initialize Firebase Admin unless using SIMPLE_AUTH
 if (!SIMPLE_AUTH) {
   if (!admin.apps.length) {
-    admin.initializeApp();
+    // Prefer explicit service account if provided (local/prod friendly), else fallback to ADC
+    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+    try {
+      if (keyPath) {
+        const resolved = path.isAbsolute(keyPath)
+          ? keyPath
+          : path.resolve(process.cwd(), keyPath);
+        const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
+        admin.initializeApp({
+          credential: admin.credential.cert(json as any),
+        });
+      } else {
+        admin.initializeApp();
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[firebase-admin] initialization failed:", e);
+      throw e;
+    }
   }
 }
 

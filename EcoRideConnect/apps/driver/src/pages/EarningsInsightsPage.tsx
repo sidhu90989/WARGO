@@ -407,40 +407,6 @@ export default function EarningsInsightsPage() {
             ))}
           </div>
         </Card>
-
-        {/* Performance Insights */}
-        <Card className="p-6">
-          <h2 className="text-xl font-bold flex items-center gap-2 mb-6">
-            <Target className="h-6 w-6 text-primary" />
-            Performance Insights
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <TrendingUp className="h-8 w-8 text-primary" />
-              </div>
-              <div className="text-2xl font-bold text-green-600">+23%</div>
-              <div className="text-sm text-muted-foreground">Earnings vs Last Month</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Zap className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="text-2xl font-bold text-blue-600">4.2</div>
-              <div className="text-sm text-muted-foreground">Avg Trips per Hour</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Shield className="h-8 w-8 text-orange-600" />
-              </div>
-              <div className="text-2xl font-bold text-orange-600">98%</div>
-              <div className="text-sm text-muted-foreground">Acceptance Rate</div>
-            </div>
-          </div>
-        </Card>
       </div>
     </div>
   );
