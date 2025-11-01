@@ -1,2 +1,0 @@
--- SQL migrations deprecated. This project now uses Firebase Firestore.
--- This file remains to avoid breaking scripts; it performs no action.

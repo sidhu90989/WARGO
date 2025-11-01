@@ -1,1 +1,0 @@
-{ "deprecated": true, "note": "SQL migrations removed in favor of Firestore" }

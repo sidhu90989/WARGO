@@ -1,4 +1,0 @@
-{
-  "deprecated": true,
-  "note": "SQL migrations removed. Firestore is now the primary datastore."
-}
