@@ -15,7 +15,13 @@
   "admin:dev": "VITE_API_URL=http://localhost:5000 VITE_SIMPLE_AUTH=true vite --host 0.0.0.0 --port 5175 --config apps/admin/vite.config.ts",
     "rider:build": "vite build --config apps/rider/vite.config.ts",
     "driver:build": "vite build --config apps/driver/vite.config.ts",
-    "admin:build": "vite build --config apps/admin/vite.config.ts"
+    "admin:build": "vite build --config apps/admin/vite.config.ts",
+    "rider:preview": "vite preview --host --port 5273 --config apps/rider/vite.config.ts",
+    "driver:preview": "vite preview --host --port 5274 --config apps/driver/vite.config.ts",
+    "admin:preview": "vite preview --host --port 5275 --config apps/admin/vite.config.ts",
+    "client:dev": "vite --host --port 5172 --config vite.config.ts",
+    "client:build": "vite build --config vite.config.ts",
+    "client:preview": "vite preview --host --port 5272 --config vite.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
