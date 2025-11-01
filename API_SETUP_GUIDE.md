@@ -2,11 +2,22 @@
 
 ## 🚀 **IMMEDIATE SETUP (Start Here)**
 
-### Step 1: Database (CRITICAL)
-1. Go to [Neon.tech](https://neon.tech) or [Supabase.com](https://supabase.com)
-2. Create a free PostgreSQL database
-3. Copy the connection string
-4. Add to .env: `DATABASE_URL="your-connection-string"`
+### Step 1: Firebase (CRITICAL)
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Create a project and enable Authentication and Firestore
+3. Client env (apps):
+   ```
+   VITE_FIREBASE_API_KEY="your-api-key"
+   VITE_FIREBASE_PROJECT_ID="your-project-id"
+   VITE_FIREBASE_APP_ID="your-app-id"
+   VITE_FIREBASE_MEASUREMENT_ID="your-measurement-id"
+   ```
+4. Server env (API): choose ONE admin credential method
+   ```
+   FIREBASE_SERVICE_ACCOUNT_KEY_PATH="./service-account.json"
+   # or FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", ... }'
+   # or FIREBASE_PROJECT_ID=... FIREBASE_CLIENT_EMAIL=... FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+   ```
 
 ### Step 2: Google Maps (CRITICAL)
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
@@ -19,17 +30,9 @@
 4. Create credentials (API Key)
 5. Add to .env: `VITE_GOOGLE_MAPS_API_KEY="your-api-key"`
 
-### Step 3: Firebase Authentication (CRITICAL)
-1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Create a new project
-3. Enable Authentication > Sign-in method > Email/Password
-4. Get configuration from Project Settings
-5. Add to .env:
-   ```
-   VITE_FIREBASE_API_KEY="your-api-key"
-   VITE_FIREBASE_PROJECT_ID="your-project-id"
-   VITE_FIREBASE_APP_ID="your-app-id"
-   ```
+### Step 3: Authentication (CRITICAL)
+1. In Firebase > Authentication, enable your desired providers (e.g., Google, Email/Password)
+2. Add your preview/deployment domains to Authorized domains
 
 ### Step 4: Stripe Payments (CRITICAL)
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com)
@@ -82,7 +85,7 @@
 - **Google Maps**: 28,000 map loads/month (FREE)
 - **Firebase**: 50,000 reads, 20,000 writes/day (FREE)
 - **Stripe**: No monthly fee, 2.9% + 30¢ per transaction
-- **Neon/Supabase**: 512MB database (FREE)
+- **Firestore**: generous free tier (check current limits)
 - **Twilio**: $15/month for phone number + $0.0075/SMS
 - **SendGrid**: 100 emails/day (FREE)
 
@@ -96,17 +99,17 @@ After setting up APIs, run:
 ```bash
 cd EcoRideConnect
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your Firebase and API keys
 npm install
-npm run db:push
-npm run dev
+npm run dev:full       # API (Firestore)
+npm run rider:dev:full # or driver/admin frontends
 ```
 
 ---
 
 ## 🔍 **API Testing Checklist**
 
-- [ ] Database connects successfully
+- [ ] Firestore connects successfully
 - [ ] Google Maps loads on homepage
 - [ ] Firebase authentication works
 - [ ] Stripe payment form appears

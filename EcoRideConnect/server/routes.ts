@@ -595,6 +595,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
+  // Firestore → WebSocket realtime bridge (when in full mode)
+  if (!SIMPLE_AUTH) {
+    try {
+      const db = admin.firestore();
+      // Broadcast helper
+      const broadcast = (msg: any) => {
+        const json = JSON.stringify(msg);
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) client.send(json);
+        });
+      };
+
+      // Rides stream: emit created/updated/deleted changes
+      db.collection('rides').onSnapshot((snap) => {
+        snap.docChanges().forEach((change) => {
+          const data = { id: change.doc.id, ...(change.doc.data() as any) };
+          if (change.type === 'added') {
+            broadcast({ type: 'ride_added', ride: data });
+          } else if (change.type === 'modified') {
+            broadcast({ type: 'ride_updated', ride: data });
+          } else if (change.type === 'removed') {
+            broadcast({ type: 'ride_removed', rideId: change.doc.id });
+          }
+        });
+      }, (err) => {
+        console.error('[ws] rides snapshot error:', err?.message || err);
+      });
+
+      // Driver availability stream
+      db.collection('driverProfiles').onSnapshot((snap) => {
+        snap.docChanges().forEach((change) => {
+          const data = { id: change.doc.id, ...(change.doc.data() as any) };
+          if (change.type === 'added') {
+            broadcast({ type: 'driver_added', driver: data });
+          } else if (change.type === 'modified') {
+            broadcast({ type: 'driver_updated', driver: data });
+          } else if (change.type === 'removed') {
+            broadcast({ type: 'driver_removed', driverId: change.doc.id });
+          }
+        });
+      }, (err) => {
+        console.error('[ws] driverProfiles snapshot error:', err?.message || err);
+      });
+
+      // Payments or admin stats could be derived on the client from ride updates.
+      console.log('[ws] Firestore realtime bridge initialized');
+    } catch (e) {
+      console.error('[ws] Firestore realtime bridge failed to init:', e);
+    }
+  }
+
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected to WebSocket');
 

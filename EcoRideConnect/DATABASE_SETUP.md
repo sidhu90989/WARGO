@@ -1,129 +1,83 @@
-# EcoRide Database Setup
+# EcoRide Storage Setup (Firestore)
 
-This guide will help you set up the database for your EcoRide application.
+This app now uses Firebase Firestore as the only persistent backend. SQL databases and Drizzle migrations have been removed.
 
 ## Quick Start
 
-### Option 1: Development Mode (No Database Required)
-For local development and testing:
+### Option 1: Local mock mode (no Firebase required)
 
 ```bash
-# Set SIMPLE_AUTH mode in .env
+# .env
 SIMPLE_AUTH=true
 VITE_SIMPLE_AUTH=true
 
-# Start the app
-npm run dev
+# Start API and a frontend app
+npm run dev       # API (port 5000)
+npm run rider:dev # or driver/admin app
 ```
 
-This uses in-memory storage - perfect for development and demos.
+This uses in-memory storage and simple session auth for rapid prototyping.
 
-### Option 2: Production Database Setup
+### Option 2: Full Firebase mode (Firestore + Auth)
 
-1. **Get a free PostgreSQL database:**
-   - **Neon** (Recommended): https://neon.tech/
-   - **Supabase**: https://supabase.com/
-   - **Railway**: https://railway.app/
+1) Create a Firebase project and enable Authentication and Firestore.
 
-2. **Configure environment:**
-   ```bash
-   # Copy example env file
-   cp .env.example .env
-   
-   # Edit .env and add your database URL
-   DATABASE_URL="postgresql://user:password@host:port/database?sslmode=require"
-   ```
-
-3. **Run setup script:**
-   ```bash
-   ./setup-db.sh
-   ```
-
-## Manual Database Setup
-
-If you prefer manual setup:
-
-### 1. Generate and Run Migrations
+2) Client env (.env):
 ```bash
-# Generate migration files
-npx drizzle-kit generate
-
-# Push schema to database
-npx drizzle-kit push
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_MEASUREMENT_ID=...
+VITE_SIMPLE_AUTH=false
 ```
 
-### 2. Seed Initial Data
+3) Server env (.env) choose ONE credential method:
 ```bash
-# Run seed script
+# Path to service account JSON
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH="./service-account.json"
+# OR inline JSON
+# FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", ... }'
+# OR explicit fields (escape newlines as \n)
+# FIREBASE_PROJECT_ID=...
+# FIREBASE_CLIENT_EMAIL=...
+# FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+SIMPLE_AUTH=false
+```
+
+4) Start servers:
+```bash
+# API in full mode (Firestore)
+npm run dev:full
+
+# Frontends in full mode (send ID token)
+npm run rider:dev:full   # or driver/admin variants
+```
+
+## Collections
+
+The API uses these collections (created automatically):
+- users, driverProfiles, rides, payments, ratings, ecoBadges, userBadges, referrals
+
+## Seeding demo data
+
+Optional:
+```bash
 npx tsx server/seed.ts
 ```
 
-### 3. Start Application
-```bash
-npm run dev
-```
+This script creates demo users and a driver profile if missing. In Firestore mode, eco badges are auto-seeded on first access.
 
-## Database Schema
+## Realtime updates
 
-The application includes these main tables:
+The server bridges Firestore snapshots to a WebSocket at `/ws` and emits:
+- ride_added | ride_updated | ride_removed
+- driver_added | driver_updated | driver_removed
 
-- **users** - User accounts (riders, drivers, admins)
-- **driver_profiles** - Driver-specific information and vehicle details
-- **rides** - Ride requests and tracking
-- **payments** - Payment transactions
-- **ratings** - User ratings and feedback
-- **eco_badges** - Achievement badges for eco-friendly behavior
-- **user_badges** - Badge assignments to users
-- **referrals** - Referral tracking
-
-## Demo Data
-
-After seeding, you'll have these demo accounts:
-
-- **Rider**: `rider@demo.com`
-- **Driver**: `driver@demo.com`
-- **Admin**: `admin@demo.com`
-
-## Environment Variables
-
-Key database-related environment variables:
-
-```bash
-# Database
-DATABASE_URL="postgresql://..."
-
-# Development Mode (optional)
-SIMPLE_AUTH=false          # Use real database
-VITE_SIMPLE_AUTH=false     # Use real auth on frontend
-
-# Other required for production
-VITE_GOOGLE_MAPS_API_KEY="your-maps-key"
-STRIPE_SECRET_KEY="your-stripe-key"
-VITE_FIREBASE_API_KEY="your-firebase-key"
-```
+Use the client hook `@/hooks/useRealtime` to subscribe and update UI state live.
 
 ## Troubleshooting
 
-### Connection Issues
-- Ensure DATABASE_URL is correctly formatted
-- Check if your database provider requires SSL (add `?sslmode=require`)
-- Verify network connectivity to your database
-
-### Migration Issues
-- Make sure the database exists before running migrations
-- Check that your user has CREATE privileges
-- Try running `npx drizzle-kit push` to sync schema
-
-### Development vs Production
-- Use `SIMPLE_AUTH=true` for local development
-- Use real database for production deployment
-- Environment variables must match between client and server
-
-## Support
-
-If you encounter issues:
-
-1. Check the console for error messages
-2. Verify your DATABASE_URL format
-3. Ensure all required environment variables are set
-4. Try the SIMPLE_AUTH mode for local development
+- Ensure your Firebase Admin credentials are valid for the project.
+- In Codespaces/preview, add the preview domain(s) to Firebase Auth Authorized domains.
+- For SIMPLE_AUTH=true, log in via the simple auth route; for full mode, the client attaches Firebase ID tokens automatically.

@@ -1,17 +1,9 @@
-import { db as maybeDb } from "./db";
-import {
-  users,
-  driverProfiles,
-  ecoBadges,
-  type InsertEcoBadge,
-  type InsertUser,
-  type InsertDriverProfile,
-} from "@shared/schema";
+import { storage } from "./storage";
+import { type InsertEcoBadge, type InsertUser, type InsertDriverProfile } from "@shared/schema";
 
 async function seed() {
   try {
-    console.log("🌱 Seeding database...");
-    const db = maybeDb!;
+  console.log("🌱 Seeding storage (Firestore or in-memory)...");
 
     // Create eco badges
     const badges: InsertEcoBadge[] = [
@@ -47,8 +39,12 @@ async function seed() {
       },
     ];
 
-    console.log("📊 Creating eco badges...");
-  await db.insert(ecoBadges).values(badges);
+    console.log("📊 Ensuring eco badges exist...");
+    const existingBadges = await storage.getAllBadges();
+    if (!existingBadges || existingBadges.length === 0) {
+      // Firestore storage will seed defaults automatically on first get
+      await storage.getAllBadges();
+    }
 
     // Create sample users
     const sampleUsers: InsertUser[] = [
@@ -85,7 +81,16 @@ async function seed() {
     ];
 
     console.log("👥 Creating sample users...");
-  const createdUsers = await db.insert(users).values(sampleUsers).returning();
+    const createdUsers: any[] = [];
+    for (const u of sampleUsers) {
+      const existing = u.email ? await storage.getUserByEmail(u.email) : undefined;
+      if (!existing) {
+        const created = await storage.createUser(u);
+        createdUsers.push(created);
+      } else {
+        createdUsers.push(existing);
+      }
+    }
 
     // Create driver profile for the demo driver
     const driverUser = createdUsers.find(u => u.email === "driver@demo.com");
@@ -105,7 +110,10 @@ async function seed() {
       };
 
       console.log("🚗 Creating driver profile...");
-      await db.insert(driverProfiles).values(driverProfile);
+      const existingProfile = await storage.getDriverProfile(driverUser.id);
+      if (!existingProfile) {
+        await storage.createDriverProfile(driverProfile);
+      }
     }
 
     console.log("✅ Database seeded successfully!");
