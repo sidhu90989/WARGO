@@ -37,10 +37,19 @@ jobs:
 
   deploy-render:
     needs: build
-    if: ${{ secrets.RENDER_SERVICE_ID && secrets.RENDER_API_KEY }}
     runs-on: ubuntu-latest
     steps:
+      - name: Check Render secrets
+        id: check_render
+        run: |
+          if [ -z "${{ secrets.RENDER_SERVICE_ID }}" ] || [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Trigger Render deploy
+        if: ${{ steps.check_render.outputs.present == 'true' }}
         env:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -51,20 +60,31 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{}' \
             "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
-          | jq -r '.message, .id'
+          | jq -r '.message, .id' || true
 
   deploy-vercel:
     needs: build
-    if: ${{ secrets.VERCEL_TOKEN && secrets.VERCEL_PROJECT_ID }}
     runs-on: ubuntu-latest
     steps:
+      - name: Check Vercel secrets
+        id: check_vercel
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: ${{ steps.check_vercel.outputs.present == 'true' }}
         uses: actions/checkout@v4
 
       - name: Install Vercel CLI
+        if: ${{ steps.check_vercel.outputs.present == 'true' }}
         run: npm i -g vercel
 
       - name: Deploy frontend to Vercel (if configured)
+        if: ${{ steps.check_vercel.outputs.present == 'true' }}
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
