@@ -40,8 +40,11 @@ export class APIValidator {
 
   static async validateDatabase(): Promise<boolean> {
     try {
-  const response = await fetch(withApiBase('/api/health'));
-      return response.ok;
+      const response = await fetch(withApiBase('/api/health'));
+      if (!response.ok) return false;
+      const body = await response.json();
+      // Expect API to be running in full (Firestore) mode
+      return body && body.ok === true && body.mode === 'full';
     } catch {
       return false;
     }
@@ -94,10 +97,10 @@ export class APIValidator {
         cost: "2.9% + 30¢ per transaction"
       },
       database: {
-        name: "PostgreSQL Database",
+        name: "Firestore Database (Firebase)",
         priority: "CRITICAL",
-        setup: "https://neon.tech/ or https://supabase.com/",
-        cost: "Free tier: 512MB database"
+        setup: "https://console.firebase.google.com/ -> Firestore",
+        cost: "Generous free tier; pay-as-you-go"
       }
     };
   }

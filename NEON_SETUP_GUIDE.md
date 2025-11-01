@@ -1,41 +1,15 @@
-# Neon Database Setup for EcoRide
+## Database Setup (Updated)
 
-## Step 1: Create Neon Account
-1. Go to [console.neon.tech](https://console.neon.tech)
-2. Sign up with GitHub/Google
-3. Create a new project: "EcoRide"
+Neon/PostgreSQL is no longer used in this project.
 
-## Step 2: Get Connection String
-1. Go to Dashboard > Connection Details
-2. Copy the connection string (looks like):
-   ```
-   postgresql://user:password@ep-name.region.aws.neon.tech/dbname?sslmode=require
-   ```
+EcoRide now uses Firebase Firestore as the only persistent backend. To set it up:
 
-## Step 3: Update Your .env
-```env
-DATABASE_URL="postgresql://user:password@ep-name.region.aws.neon.tech/dbname?sslmode=require"
-SIMPLE_AUTH=false
-```
+1) Create a Firebase project and enable Authentication and Firestore.
+2) Configure client keys in `EcoRideConnect/.env` (`VITE_FIREBASE_*`).
+3) Configure server Admin credentials via one of:
+   - `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` (path to JSON key), or
+   - `FIREBASE_SERVICE_ACCOUNT_JSON` (inline JSON), or
+   - `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (escaped newlines).
+4) Run the API in full mode: `npm run dev:full` inside `EcoRideConnect/`.
 
-## Step 4: Initialize Database
-```bash
-cd EcoRideConnect
-npm run db:push
-```
-
-## Step 5: Verify Connection
-Start your app and check for database connection logs:
-```bash
-npm run dev
-```
-
-Look for: `[db] module init. SIMPLE_AUTH=false DATABASE_URL=SET`
-
-## Free Tier Limits:
-- ✅ 512MB storage
-- ✅ 100 compute hours/month
-- ✅ Unlimited databases
-- ✅ 2GB data transfer
-
-Perfect for development and early production! 🎉
+See `EcoRideConnect/DATABASE_SETUP.md` for details.

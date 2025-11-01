@@ -31,15 +31,25 @@ if (!SIMPLE_AUTH) {
     const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
 
     try {
+      if (projectId) {
+        process.env.GOOGLE_CLOUD_PROJECT = projectId;
+        process.env.GCLOUD_PROJECT = projectId;
+      }
       if (keyPath) {
         const resolved = path.isAbsolute(keyPath)
           ? keyPath
           : path.resolve(process.cwd(), keyPath);
         const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
-        admin.initializeApp({ credential: admin.credential.cert(json as any) });
+        admin.initializeApp({
+          credential: admin.credential.cert(json as any),
+          projectId: (json as any).project_id || projectId,
+        });
       } else if (saJson) {
         const json = JSON.parse(saJson);
-        admin.initializeApp({ credential: admin.credential.cert(json as any) });
+        admin.initializeApp({
+          credential: admin.credential.cert(json as any),
+          projectId: (json as any).project_id || projectId,
+        });
       } else if (projectId && clientEmail && privateKey) {
         admin.initializeApp({
           credential: admin.credential.cert({
@@ -47,6 +57,7 @@ if (!SIMPLE_AUTH) {
             clientEmail,
             privateKey,
           } as any),
+          projectId,
         });
       } else {
         // Application Default Credentials (e.g., when running on GCP)
