@@ -31,6 +31,7 @@ import {
 } from "@shared/schema";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 import { customAlphabet } from "nanoid";
+import admin from "firebase-admin";
 
 // Note: don't read SIMPLE_AUTH at module import time because dotenv may not be loaded yet.
 // We'll evaluate it at runtime inside getInstance().
@@ -49,13 +50,24 @@ class StorageSelector {
 
   static getInstance(): IStorage {
     if (!this.instance) {
-      // Force in-memory storage strictly based on SIMPLE_AUTH flag
+      // Storage backend priority:
+      // 1) SIMPLE_AUTH=true => Memory
+      // 2) STORAGE=firestore => Firestore
+      // 3) default => Database (Drizzle/Neon)
       const simple = process.env.SIMPLE_AUTH === 'true';
+      const backend = process.env.STORAGE || '';
       // eslint-disable-next-line no-console
-      console.log(`[storage] selecting storage. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} -> ${simple ? 'memory' : 'database'}`);
-      this.instance = simple ? new MemoryStorage() : new DatabaseStorage();
+      console.log(`[storage] selecting storage. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} STORAGE=${backend}`);
+      if (simple) {
+        this.instance = new MemoryStorage();
+      } else if (backend.toLowerCase() === 'firestore') {
+        this.instance = new FirestoreStorage();
+      } else {
+        this.instance = new DatabaseStorage();
+      }
       // eslint-disable-next-line no-console
-      console.log(`[storage] using ${simple ? 'memory' : 'database'} storage`);
+      const label = this.instance.constructor.name;
+      console.log(`[storage] using ${label}`);
     }
     return this.instance;
   }
@@ -390,6 +402,216 @@ export class DatabaseStorage implements IStorage {
       monthRides: allRides.length,
       vehicleStats,
     };
+  }
+}
+
+// Firestore storage for production when using Firebase only
+class FirestoreStorage implements IStorage {
+  private db = (() => {
+    if (!admin.apps.length) {
+      try { admin.initializeApp(); } catch { /* ignore */ }
+    }
+    return admin.firestore();
+  })();
+
+  private col(name: string) { return this.db.collection(name); }
+
+  // Users
+  async getUser(id: string) {
+    const snap = await this.col('users').doc(id).get();
+    return snap.exists ? ({ id: snap.id, ...(snap.data() as any) } as User) : undefined;
+  }
+  async getUserByEmail(email: string) {
+    const q = await this.col('users').where('email', '==', email).limit(1).get();
+    const doc = q.docs[0];
+    return doc ? ({ id: doc.id, ...(doc.data() as any) } as User) : undefined;
+  }
+  async getUserByFirebaseUid(firebaseUid: string) {
+    const q = await this.col('users').where('firebaseUid', '==', firebaseUid).limit(1).get();
+    const doc = q.docs[0];
+    return doc ? ({ id: doc.id, ...(doc.data() as any) } as User) : undefined;
+  }
+  async createUser(user: InsertUser) {
+    const now = new Date();
+    const data: any = { ...user, createdAt: now, updatedAt: now };
+    const docRef = await this.col('users').add(data);
+    const snap = await docRef.get();
+    return { id: docRef.id, ...(snap.data() as any) } as User;
+  }
+  async updateUser(id: string, updates: Partial<User>) {
+    const data = { ...updates, updatedAt: new Date() } as any;
+    await this.col('users').doc(id).set(data, { merge: true });
+    const snap = await this.col('users').doc(id).get();
+    return { id, ...(snap.data() as any) } as User;
+  }
+
+  // Driver profiles (doc id = userId for easy lookup)
+  async getDriverProfile(userId: string) {
+    const snap = await this.col('driverProfiles').doc(userId).get();
+    return snap.exists ? ({ id: snap.id, ...(snap.data() as any) } as DriverProfile) : undefined;
+  }
+  async createDriverProfile(profile: InsertDriverProfile) {
+    const data: any = { ...profile, createdAt: new Date(), updatedAt: new Date() };
+    await this.col('driverProfiles').doc(profile.userId).set(data);
+    const snap = await this.col('driverProfiles').doc(profile.userId).get();
+    return { id: snap.id, ...(snap.data() as any) } as DriverProfile;
+  }
+  async updateDriverProfile(userId: string, updates: Partial<DriverProfile>) {
+    const data = { ...updates, updatedAt: new Date() } as any;
+    await this.col('driverProfiles').doc(userId).set(data, { merge: true });
+    const snap = await this.col('driverProfiles').doc(userId).get();
+    return { id: snap.id, ...(snap.data() as any) } as DriverProfile;
+  }
+
+  // Rides
+  async createRide(ride: InsertRide) {
+    const data: any = { ...ride, requestedAt: new Date(), createdAt: new Date(), updatedAt: new Date() };
+    const ref = await this.col('rides').add(data);
+    const snap = await ref.get();
+    return { id: ref.id, ...(snap.data() as any) } as Ride;
+    }
+  async getRide(id: string) {
+    const snap = await this.col('rides').doc(id).get();
+    return snap.exists ? ({ id: snap.id, ...(snap.data() as any) } as Ride) : undefined;
+  }
+  async getUserRides(userId: string, role: 'rider' | 'driver') {
+    const key = role === 'rider' ? 'riderId' : 'driverId';
+    const q = await this.col('rides').where(key, '==', userId).orderBy('createdAt', 'desc').get();
+    return q.docs.map(d => ({ id: d.id, ...(d.data() as any) } as Ride));
+  }
+  async getPendingRides() {
+    const q = await this.col('rides').where('status', '==', 'pending').orderBy('requestedAt', 'asc').get();
+    return q.docs.map(d => ({ id: d.id, ...(d.data() as any) } as Ride));
+  }
+  async getActiveRides() {
+    const q1 = await this.col('rides').where('status', '==', 'accepted').get();
+    const q2 = await this.col('rides').where('status', '==', 'in_progress').get();
+    const docs = [...q1.docs, ...q2.docs].sort((a, b) => +new Date((b.data() as any).requestedAt || 0) - +new Date((a.data() as any).requestedAt || 0));
+    return docs.map(d => ({ id: d.id, ...(d.data() as any) } as Ride));
+  }
+  async updateRide(id: string, updates: Partial<Ride>) {
+    await this.col('rides').doc(id).set({ ...updates, updatedAt: new Date() } as any, { merge: true });
+    const snap = await this.col('rides').doc(id).get();
+    return { id, ...(snap.data() as any) } as Ride;
+  }
+
+  // Payments
+  async createPayment(payment: InsertPayment) {
+    const ref = await this.col('payments').add({ ...payment, createdAt: new Date(), updatedAt: new Date() } as any);
+    const snap = await ref.get();
+    return { id: ref.id, ...(snap.data() as any) } as Payment;
+  }
+  async getPaymentByRide(rideId: string) {
+    const q = await this.col('payments').where('rideId', '==', rideId).limit(1).get();
+    const d = q.docs[0];
+    return d ? ({ id: d.id, ...(d.data() as any) } as Payment) : undefined;
+  }
+
+  // Ratings
+  async createRating(rating: InsertRating) {
+    const ref = await this.col('ratings').add({ ...rating, createdAt: new Date() } as any);
+    const snap = await ref.get();
+    return { id: ref.id, ...(snap.data() as any) } as Rating;
+  }
+  async getDriverRatings(driverId: string) {
+    const q = await this.col('ratings').where('rateeId', '==', driverId).orderBy('createdAt', 'desc').get();
+    return q.docs.map(d => ({ id: d.id, ...(d.data() as any) } as Rating));
+  }
+
+  // Badges
+  async getAllBadges() {
+    const q = await this.col('ecoBadges').get();
+    if (q.empty) {
+      // seed defaults once
+      const seed = [
+        { name: 'Green Beginner', description: 'Complete your first eco-friendly ride', iconName: 'leaf', requiredPoints: 10 },
+        { name: 'Eco Warrior', description: 'Save 10kg of CO₂', iconName: 'shield', requiredPoints: 100 },
+        { name: 'Planet Protector', description: 'Complete 25 eco-rides', iconName: 'globe', requiredPoints: 250 },
+      ];
+      await Promise.all(seed.map(s => this.col('ecoBadges').add({ ...s, createdAt: new Date() })));
+      const q2 = await this.col('ecoBadges').get();
+      return q2.docs.map(d => ({ id: d.id, ...(d.data() as any) } as EcoBadge));
+    }
+    return q.docs.map(d => ({ id: d.id, ...(d.data() as any) } as EcoBadge));
+  }
+  async getUserBadges(userId: string) {
+    const q = await this.col('userBadges').where('userId', '==', userId).get();
+    return q.docs.map(d => ({ id: d.id, ...(d.data() as any) } as UserBadge));
+  }
+  async awardBadge(userBadge: InsertUserBadge) {
+    const ref = await this.col('userBadges').add({ ...userBadge, earnedAt: new Date() } as any);
+    const snap = await ref.get();
+    return { id: ref.id, ...(snap.data() as any) } as UserBadge;
+  }
+
+  // Referrals
+  async createReferral(referral: InsertReferral) {
+    const ref = await this.col('referrals').add({ ...referral, createdAt: new Date() } as any);
+    const snap = await ref.get();
+    return { id: ref.id, ...(snap.data() as any) } as Referral;
+  }
+  async getUserReferrals(userId: string) {
+    const q = await this.col('referrals').where('referrerId', '==', userId).get();
+    return q.docs.map(d => ({ id: d.id, ...(d.data() as any) } as Referral));
+  }
+
+  // Stats
+  async getRiderStats(userId: string) {
+    const user = await this.getUser(userId);
+    const q = await this.col('rides').where('riderId', '==', userId).where('status', '==', 'completed').get();
+    const badges = await this.getUserBadges(userId);
+    return {
+      totalRides: q.size,
+      ecoPoints: user?.ecoPoints || 0,
+      totalCO2Saved: user?.totalCO2Saved || '0',
+      badgesEarned: badges.length,
+    } as any;
+  }
+  async getDriverStats(userId: string) {
+    const profile = await this.getDriverProfile(userId);
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const q = await this.col('rides')
+      .where('driverId', '==', userId)
+      .where('status', '==', 'completed')
+      .get();
+    const todayRides = q.docs
+      .map(d => ({ id: d.id, ...(d.data() as any) }))
+      .filter(r => r.completedAt && new Date(r.completedAt).getTime() >= start.getTime());
+    const todayEarnings = todayRides.reduce((s: number, r: any) => s + Number(r.actualFare || 0), 0);
+    return {
+      totalRides: profile?.totalRides || 0,
+      totalEarnings: profile?.totalEarnings || '0',
+      rating: profile?.rating || '5.00',
+      todayEarnings: todayEarnings.toFixed(2),
+    } as any;
+  }
+  async getAdminStats() {
+    const usersSnap = await this.col('users').get();
+    const driversSnap = await this.col('driverProfiles').where('isAvailable', '==', true).get();
+    const ridesSnap = await this.col('rides').get();
+    const rides = ridesSnap.docs.map(d => d.data() as any);
+    const completed = rides.filter((r: any) => r.status === 'completed');
+    const totalRevenue = completed.reduce((s: number, r: any) => s + Number(r.actualFare || 0), 0);
+    const totalCO2 = completed.reduce((s: number, r: any) => s + Number(r.co2Saved || 0), 0);
+    const today = new Date().toDateString();
+    const todayRides = rides.filter((r: any) => r.requestedAt && new Date(r.requestedAt).toDateString() === today);
+    const vehicleStats = {
+      e_rickshaw: rides.filter((r: any) => r.vehicleType === 'e_rickshaw').length,
+      e_scooter: rides.filter((r: any) => r.vehicleType === 'e_scooter').length,
+      cng_car: rides.filter((r: any) => r.vehicleType === 'cng_car').length,
+    } as any;
+    return {
+      totalUsers: usersSnap.size,
+      activeDrivers: driversSnap.size,
+      totalRevenue: totalRevenue.toFixed(2),
+      totalCO2Saved: totalCO2.toFixed(2),
+      totalRides: rides.length,
+      todayRides: todayRides.length,
+      weekRides: rides.length,
+      monthRides: rides.length,
+      vehicleStats,
+    } as any;
   }
 }
 
