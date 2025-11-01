@@ -1,6 +1,6 @@
-# EcoRide Database Setup
+# WARGO Database Setup
 
-This guide will help you set up the database for your EcoRide application.
+This guide will help you set up the database for your WARGO application.
 
 ## Quick Start
 
@@ -20,10 +20,11 @@ This uses in-memory storage - perfect for development and demos.
 
 ### Option 2: Production Database Setup
 
-1. **Get a free PostgreSQL database:**
-   - **Neon** (Recommended): https://neon.tech/
+1. **Get a PostgreSQL database (choose any provider):**
    - **Supabase**: https://supabase.com/
    - **Railway**: https://railway.app/
+   - **Aiven**: https://aiven.io/
+   - **AWS RDS / Azure / GCP**: Managed Postgres services
 
 2. **Configure environment:**
    ```bash

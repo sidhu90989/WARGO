@@ -1,12 +1,11 @@
-# EcoRide API Setup Guide
+# WARGO API Setup Guide
 
 ## 🚀 **IMMEDIATE SETUP (Start Here)**
 
 ### Step 1: Database (CRITICAL)
-1. Go to [Neon.tech](https://neon.tech) or [Supabase.com](https://supabase.com)
-2. Create a free PostgreSQL database
-3. Copy the connection string
-4. Add to .env: `DATABASE_URL="your-connection-string"`
+1. Provision a PostgreSQL database (e.g., [Supabase](https://supabase.com), [Railway](https://railway.app), [AWS RDS/Azure/GCP])
+2. Copy the connection string
+3. Add to .env: `DATABASE_URL="your-connection-string"`
 
 ### Step 2: Google Maps (CRITICAL)
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
@@ -82,7 +81,7 @@
 - **Google Maps**: 28,000 map loads/month (FREE)
 - **Firebase**: 50,000 reads, 20,000 writes/day (FREE)
 - **Stripe**: No monthly fee, 2.9% + 30¢ per transaction
-- **Neon/Supabase**: 512MB database (FREE)
+- **Supabase/Railway**: generous free tiers for small databases
 - **Twilio**: $15/month for phone number + $0.0075/SMS
 - **SendGrid**: 100 emails/day (FREE)
 

@@ -17,7 +17,7 @@ export default function NotFoundPage() {
         </div>
         <Button onClick={() => setLocation("/")} data-testid="button-go-home">
           <Home className="h-4 w-4 mr-2" />
-          Go Home
+          Go to WARGO
         </Button>
       </div>
     </div>

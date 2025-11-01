@@ -24,7 +24,7 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// CORS for separate frontend origin (e.g., Vercel) while sending cookies
+// CORS for separate frontend origin while sending cookies
 if (process.env.FRONTEND_ORIGIN) {
   app.use(
     cors({

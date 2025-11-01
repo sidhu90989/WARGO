@@ -1,8 +1,7 @@
 import { config } from "dotenv";
 config();
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
 // Determine if we should initialize the database
@@ -18,13 +17,12 @@ if (!SIMPLE_AUTH) {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
   }
-  // Configure Neon only when using DB
-  neonConfig.webSocketConstructor = ws;
+  // Initialize a standard Postgres pool using the DATABASE_URL
   pool = new Pool({ connectionString: process.env.DATABASE_URL });
   db = drizzle({ client: pool, schema });
 } else {
   // eslint-disable-next-line no-console
-  console.log('[db] SIMPLE_AUTH=true -> skipping Neon/drizzle initialization');
+  console.log('[db] SIMPLE_AUTH=true -> skipping database initialization');
 }
 
 export { pool, db };

@@ -177,7 +177,7 @@ export default function AdminDashboard() {
               <Menu className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="font-serif text-2xl font-bold">EcoRide Admin</h1>
+              <h1 className="font-serif text-2xl font-bold">{((import.meta as any).env?.VITE_APP_NAME as string) || 'WARGO'}</h1>
               <p className="text-sm text-muted-foreground">Comprehensive Dashboard</p>
             </div>
           </div>

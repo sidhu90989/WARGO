@@ -1,4 +1,4 @@
-name: Deploy EcoRide Application
+name: Deploy WARGO Application
 
 on:
   push:

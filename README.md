@@ -76,7 +76,7 @@ The API server will be available at `http://localhost:5000`. The Rider/Driver/Ad
 
 ## Deployment
 
-This project can be deployed to GitHub Pages for static apps and to Render for the API as configured.
+You can deploy the API and web apps to your preferred platform (e.g., a Node.js host or container platform). This repo no longer contains provider-specific deployment files; wire it up in your infra of choice.
 
 ### Manual Deployment
 

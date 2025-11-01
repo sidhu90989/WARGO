@@ -96,8 +96,8 @@ export class APIValidator {
       database: {
         name: "PostgreSQL Database",
         priority: "CRITICAL",
-        setup: "https://neon.tech/ or https://supabase.com/",
-        cost: "Free tier: 512MB database"
+        setup: "https://supabase.com/ or any managed Postgres (AWS RDS/Azure/GCP/Railway)",
+        cost: "Varies by provider; generous free tiers available"
       }
     };
   }

@@ -208,7 +208,7 @@ export default function ConfirmRidePage() {
             <div className="flex items-start gap-3">
               <Leaf className="h-5 w-5 text-green-600 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">EcoRide Impact</h4>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">WARGO Impact</h4>
                 <p className="text-sm text-green-700 dark:text-green-300 mt-1">
                   This ride will save {rideData.co2Saved} of CO₂ compared to a regular taxi! 
                   You're helping make our city cleaner. 🌱

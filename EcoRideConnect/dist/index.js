@@ -285,9 +285,8 @@ __export(db_exports, {
   pool: () => pool
 });
 import { config } from "dotenv";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 var SIMPLE_AUTH, pool, db;
 var init_db = __esm({
   "server/db.ts"() {
@@ -300,18 +299,18 @@ var init_db = __esm({
       if (!process.env.DATABASE_URL) {
         throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
       }
-      neonConfig.webSocketConstructor = ws;
       pool = new Pool({ connectionString: process.env.DATABASE_URL });
       db = drizzle({ client: pool, schema: schema_exports });
     } else {
-      console.log("[db] SIMPLE_AUTH=true -> skipping Neon/drizzle initialization");
+      console.log("[db] SIMPLE_AUTH=true -> skipping database initialization");
     }
   }
 });
 
 // server/index.ts
 import { config as config4 } from "dotenv";
-import express2 from "express";
+import express from "express";
+import cors from "cors";
 import session from "express-session";
 import MemoryStoreFactory from "memorystore";
 
@@ -734,6 +733,50 @@ var storage = StorageSelector.getInstance();
 // server/routes.ts
 import Stripe from "stripe";
 import admin from "firebase-admin";
+import fs from "fs";
+import path from "path";
+
+// server/integrations/nameApi.ts
+function getEnv() {
+  const isProd = process.env.NODE_ENV === "production";
+  const baseUrl = isProd ? process.env.NAME_API_BASE_URL_PROD : process.env.NAME_API_BASE_URL_DEV;
+  const token = isProd ? process.env.NAME_API_TOKEN_PROD : process.env.NAME_API_TOKEN_DEV;
+  if (!baseUrl || !token) {
+    throw new Error("[nameApi] Missing NAME_API_* envs. Please configure .env");
+  }
+  return { baseUrl, token };
+}
+async function fetchJson(path2, init) {
+  const { baseUrl, token } = getEnv();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1e4);
+  try {
+    const res = await fetch(`${baseUrl}${path2}`, {
+      ...init,
+      method: init?.method || "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        ...init?.headers || {}
+      },
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const text2 = await res.text().catch(() => "");
+      throw new Error(`[nameApi] ${res.status} ${res.statusText} :: ${text2}`);
+    }
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+var nameApi = {
+  ping: () => fetchJson(`/ping`),
+  whoAmI: () => fetchJson(`/whoami`)
+};
+var nameApi_default = nameApi;
+
+// server/routes.ts
 config3();
 var SIMPLE_AUTH2 = process.env.SIMPLE_AUTH === "true";
 console.log("\u{1F527} Environment check:", {
@@ -743,7 +786,21 @@ console.log("\u{1F527} Environment check:", {
 });
 if (!SIMPLE_AUTH2) {
   if (!admin.apps.length) {
-    admin.initializeApp();
+    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+    try {
+      if (keyPath) {
+        const resolved = path.isAbsolute(keyPath) ? keyPath : path.resolve(process.cwd(), keyPath);
+        const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
+        admin.initializeApp({
+          credential: admin.credential.cert(json)
+        });
+      } else {
+        admin.initializeApp();
+      }
+    } catch (e) {
+      console.error("[firebase-admin] initialization failed:", e);
+      throw e;
+    }
   }
 }
 var stripe = (() => {
@@ -754,12 +811,12 @@ var stripe = (() => {
   return new Stripe(process.env.STRIPE_SECRET_KEY);
 })();
 async function verifyFirebaseToken(req, res, next) {
+  if (req.session?.user) {
+    req.firebaseUid = req.session.user.firebaseUid;
+    req.email = req.session.user.email;
+    return next();
+  }
   if (SIMPLE_AUTH2) {
-    if (req.session?.user) {
-      req.firebaseUid = req.session.user.firebaseUid;
-      req.email = req.session.user.email;
-      return next();
-    }
     return res.status(401).json({ error: "Unauthorized" });
   }
   const authHeader = req.headers.authorization;
@@ -802,7 +859,8 @@ function generateReferralCode(name) {
   return `${namePart}${randomPart}`;
 }
 async function registerRoutes(app2) {
-  if (SIMPLE_AUTH2) {
+  if (SIMPLE_AUTH2 || process.env.ALLOW_SIMPLE_AUTH_ROUTES === "true") {
+    console.log(`[auth] registering simple-auth routes (SIMPLE_AUTH=${SIMPLE_AUTH2}, ALLOW_SIMPLE_AUTH_ROUTES=${process.env.ALLOW_SIMPLE_AUTH_ROUTES})`);
     registerSimpleAuth(app2);
   }
   const verifyHandler = async (req, res) => {
@@ -875,6 +933,14 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/health", (_req, res) => {
     res.json({ ok: true, mode: SIMPLE_AUTH2 ? "simple" : "full" });
+  });
+  app2.get("/api/integrations/name-api/whoami", async (_req, res) => {
+    try {
+      const data = await nameApi_default.whoAmI();
+      res.json({ ok: true, data });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
   });
   app2.get("/api/rider/stats", verifyFirebaseToken, async (req, res) => {
     try {
@@ -1155,9 +1221,9 @@ async function registerRoutes(app2) {
   });
   const httpServer = createServer(app2);
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
-  wss.on("connection", (ws2) => {
+  wss.on("connection", (ws) => {
     console.log("Client connected to WebSocket");
-    ws2.on("message", (message) => {
+    ws.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
         if (data.type === "location_update") {
@@ -1178,60 +1244,16 @@ async function registerRoutes(app2) {
         console.error("WebSocket message error:", error);
       }
     });
-    ws2.on("close", () => {
+    ws.on("close", () => {
       console.log("Client disconnected from WebSocket");
     });
   });
   return httpServer;
 }
 
-// server/vite.ts
-import express from "express";
-import fs from "fs";
-import path2 from "path";
-import { createServer as createViteServer, createLogger } from "vite";
-
-// vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-var vite_config_default = defineConfig({
-  plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    ...process.env.NODE_ENV !== "production" && process.env.REPL_ID !== void 0 ? [
-      await import("@replit/vite-plugin-cartographer").then(
-        (m) => m.cartographer()
-      ),
-      await import("@replit/vite-plugin-dev-banner").then(
-        (m) => m.devBanner()
-      )
-    ] : []
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets")
-    }
-  },
-  root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true
-  },
-  server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"]
-    }
-  }
-});
-
-// server/vite.ts
-import { nanoid } from "nanoid";
-var viteLogger = createLogger();
+// server/index.ts
+config4();
+var app = express();
 function log(message, source = "express") {
   const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -1241,67 +1263,17 @@ function log(message, source = "express") {
   });
   console.log(`${formattedTime} [${source}] ${message}`);
 }
-async function setupVite(app2, server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true
-  };
-  const vite = await createViteServer({
-    ...vite_config_default,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        process.exit(1);
-      }
-    },
-    server: serverOptions,
-    appType: "custom"
-  });
-  app2.use(vite.middlewares);
-  app2.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
-    try {
-      const clientTemplate = path2.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html"
-      );
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`
-      );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e);
-      next(e);
-    }
-  });
-}
-function serveStatic(app2) {
-  const distPath = path2.resolve(import.meta.dirname, "public");
-  if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
-    );
-  }
-  app2.use(express.static(distPath));
-  app2.use("*", (_req, res) => {
-    res.sendFile(path2.resolve(distPath, "index.html"));
-  });
-}
-
-// server/index.ts
-config4();
-var app = express2();
 app.set("trust proxy", 1);
-app.use(express2.json());
-app.use(express2.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+if (process.env.FRONTEND_ORIGIN) {
+  app.use(
+    cors({
+      origin: process.env.FRONTEND_ORIGIN.split(",").map((s) => s.trim()),
+      credentials: true
+    })
+  );
+}
 var MemoryStore = MemoryStoreFactory(session);
 var isCodespaces = !!process.env.CODESPACES;
 var forceSecure = process.env.COOKIE_SECURE === "true";
@@ -1328,7 +1300,7 @@ app.use(
 );
 app.use((req, res, next) => {
   const start = Date.now();
-  const path3 = req.path;
+  const path2 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -1337,8 +1309,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path3.startsWith("/api")) {
-      let logLine = `${req.method} ${path3} ${res.statusCode} in ${duration}ms`;
+    if (path2.startsWith("/api")) {
+      let logLine = `${req.method} ${path2} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -1358,11 +1330,6 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen({
     port,

@@ -117,7 +117,7 @@ export default function AnalyticsPage() {
     { rank: 3, name: "Mike EcoDriver", type: "driver", co2Saved: 2489, rides: 234, achievement: "Electric Master" },
     { rank: 4, name: "New York Hub", type: "city", co2Saved: 19964, rides: 58420, achievement: "Cleanest City" },
     { rank: 5, name: "Emma Climate", type: "user", co2Saved: 2234, rides: 118, achievement: "Sustainability Star" },
-    { rank: 6, name: "Alex EcoRider", type: "user", co2Saved: 2156, rides: 104, achievement: "Green Guardian" },
+  { rank: 6, name: "Alex WargoRider", type: "user", co2Saved: 2156, rides: 104, achievement: "Green Guardian" },
     { rank: 7, name: "David CleanDrive", type: "driver", co2Saved: 2089, rides: 195, achievement: "Eco Driver Pro" },
     { rank: 8, name: "Lisa Planet", type: "user", co2Saved: 1987, rides: 98, achievement: "Earth Defender" }
   ];

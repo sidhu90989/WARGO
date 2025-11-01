@@ -1,0 +1,26 @@
+name: Provider guard (keep provider-agnostic)
+
+on:
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan for provider-specific terms
+        run: |
+          set -e
+          echo "Scanning repository for provider-specific terms (neon, vercel, render)."
+          if grep -R -n -i -E '(@neondatabase|neon\.tech|@vercel|vercel\.com|render\.com|render\.yaml)' . \
+            --exclude-dir={.git,node_modules,dist,build,out} \
+            --exclude={package-lock.json,*.lock,*.min.js,*.bundle.js,*.map}; then
+            echo "Found prohibited provider-specific terms. Please keep the repo provider-agnostic."
+            exit 1
+          else
+            echo "Provider guard passed."
+          fi

@@ -53,7 +53,7 @@ export default function RewardsPage() {
               <h2 className="font-serif text-lg font-semibold">Invite & Earn</h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              Invite friends to EcoRide and earn 100 eco-points for each successful referral!
+              Invite friends to WARGO and earn 100 eco-points for each successful referral!
             </p>
             <div className="flex gap-2">
               <div className="flex-1 p-3 bg-background rounded-md border">

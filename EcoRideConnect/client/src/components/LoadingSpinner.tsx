@@ -21,7 +21,7 @@ export function FullPageLoader() {
     <div className="h-screen w-full flex items-center justify-center bg-background">
       <div className="text-center space-y-4">
         <LoadingSpinner size="lg" />
-        <p className="text-muted-foreground">Loading EcoRide...</p>
+        <p className="text-muted-foreground">Loading {((import.meta as any).env?.VITE_APP_NAME as string) || 'WARGO'}...</p>
       </div>
     </div>
   );

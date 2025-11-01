@@ -4,8 +4,8 @@
 
 1. **Clone and Install**
 ```bash
-git clone https://github.com/sidhu90989/Echo-Ride.git
-cd Echo-Ride/EcoRideConnect
+git clone <your-repo-url>
+cd EcoRideConnect
 npm install
 ```
 
@@ -66,7 +66,7 @@ npm run admin:dev
 ### Backend (Express + TypeScript)
 - API-only server in `/server` (does not serve static SPA assets)
 - CORS configured for per-app origins via `FRONTEND_ORIGIN`
-- Database: Drizzle ORM with PostgreSQL (Neon) when `SIMPLE_AUTH=false`
+- Database: Drizzle ORM with PostgreSQL when `SIMPLE_AUTH=false`
 - Routes: `/server/routes.ts` (auth, rider/driver/admin, Stripe, WS)
 
 ### Shared
@@ -92,14 +92,8 @@ npm run admin:dev
 
 The app automatically deploys to GitHub Pages when you push to main branch.
 
-Note: The previous unified single-page app has been removed. Use the per-app scripts above for local development and deployment.
+Note: The previous unified single-page app has been removed. Use the per-app scripts above for local development and deployment under the WARGO brand.
 
-### PR Preview Databases (Neon)
+### PR Preview Databases
 
-Pull Requests automatically create a temporary Neon database branch and run Drizzle migrations via the `neon-preview` workflow.
-
-Setup required (one-time in GitHub repo settings):
-- Actions Secret: `NEON_API_KEY` (Neon Console → Settings → API Keys)
-- Actions Variable: `NEON_PROJECT_ID` (Project settings → Project ID)
-
-The workflow file is at `.github/workflows/neon-preview.yml` and runs on PR open/sync, then deletes the Neon branch when the PR is closed.
+Neon-based PR preview databases have been removed to keep the repo provider-agnostic. If you need ephemeral databases per PR, integrate with your chosen Postgres provider in a custom workflow.

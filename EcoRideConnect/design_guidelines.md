@@ -1,4 +1,4 @@
-# EcoRide Design Guidelines
+# WARGO Design Guidelines
 
 ## Design Approach
 

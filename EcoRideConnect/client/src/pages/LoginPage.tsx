@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Leaf, Mail } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+import { appName, appSubtitle } from "@/lib/brand";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -82,7 +83,7 @@ export default function LoginPage() {
       setUser(userData);
       
       toast({
-        title: "Welcome to EcoRide!",
+        title: `Welcome to ${appName()}!`,
         description: "Your account has been created successfully.",
       });
 
@@ -109,11 +110,16 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-eco-mint via-background to-eco-mint/50 dark:from-background dark:via-background dark:to-eco-dark-green/10 p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3">
             <div className="p-3 bg-primary rounded-full">
               <Leaf className="h-8 w-8 text-primary-foreground" />
             </div>
-            <h1 className="font-serif text-4xl font-bold text-foreground">EcoRide</h1>
+            <div className="flex flex-col items-start">
+              <h1 className="font-serif text-4xl font-bold text-foreground leading-tight">{appName()}</h1>
+              {appSubtitle() && (
+                <span className="text-xs tracking-widest uppercase text-muted-foreground">{appSubtitle()}</span>
+              )}
+            </div>
           </div>
           <p className="text-muted-foreground text-lg">
             Join the movement towards cleaner, safer transportation
@@ -126,7 +132,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <h2 className="font-serif text-2xl font-semibold text-center">Welcome</h2>
                 <p className="text-muted-foreground text-center text-sm">
-                  Sign in to start your eco-friendly journey
+                  Sign in to start your journey with {appName()}
                 </p>
               </div>
 
@@ -231,7 +237,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground">
-          By continuing, you agree to EcoRide's Terms of Service and Privacy Policy
+          By continuing, you agree to {appName()}'s Terms of Service and Privacy Policy
         </p>
       </div>
     </div>

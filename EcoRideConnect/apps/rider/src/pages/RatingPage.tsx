@@ -94,7 +94,7 @@ export default function RatingPage() {
             <div className="space-y-2">
               <h3 className="font-serif text-2xl font-semibold">Trip Complete!</h3>
               <p className="text-sm text-muted-foreground">
-                Thank you for choosing EcoRide. Your feedback helps us serve you better.
+                Thank you for choosing WARGO. Your feedback helps us serve you better.
               </p>
             </div>
             

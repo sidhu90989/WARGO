@@ -11,7 +11,7 @@ import { Route, Switch } from "wouter";
 function Placeholder() {
   return (
     <div className="p-6 max-w-2xl mx-auto text-sm">
-      <h1 className="text-2xl font-semibold mb-2">EcoRideConnect</h1>
+      <h1 className="text-2xl font-semibold mb-2">WARGO</h1>
       <p className="mb-4">
         The unified client has been split into three separate apps. This placeholder exists only for legacy compatibility and development tooling.
       </p>

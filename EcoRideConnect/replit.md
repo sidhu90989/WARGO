@@ -8,7 +8,7 @@ WARGO is a comprehensive ride-sharing platform focused on eco-friendly transport
 ### Tech Stack
 - **Frontend**: React + TypeScript, Tailwind CSS, Shadcn UI
 - **Backend**: Node.js + Express
-- **Database**: PostgreSQL (Neon)
+- **Database**: PostgreSQL (managed or self-hosted)
 - **Authentication**: Firebase Auth (Google Sign-In)
 - **Payments**: Stripe
 - **Real-time**: WebSockets for live tracking
