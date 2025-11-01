@@ -51,7 +51,11 @@ export function RideCard({ ride, onClick }: RideCardProps) {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>{format(new Date(ride.requestedAt), "MMM d, h:mm a")}</span>
+              <span>
+                {ride.requestedAt
+                  ? format(new Date(ride.requestedAt as any), "MMM d, h:mm a")
+                  : "—"}
+              </span>
             </div>
             {ride.distance && (
               <span className="text-muted-foreground">{Number(ride.distance).toFixed(1)} km</span>

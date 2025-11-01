@@ -25,7 +25,7 @@ A sustainable rideshare platform that connects eco-conscious drivers and riders,
 ### Backend
 - **Node.js** with Express
 - **TypeScript** for type safety
-- **Drizzle ORM** with PostgreSQL
+- **Firebase Firestore** for storage
 - **WebSocket** for real-time features
 - **Passport.js** for authentication
 - **Stripe** for payments
@@ -34,7 +34,6 @@ A sustainable rideshare platform that connects eco-conscious drivers and riders,
 
 ### Prerequisites
 - Node.js 18+ 
-- PostgreSQL database
 - Firebase project
 - Stripe account
 
@@ -62,17 +61,16 @@ Fill in your environment variables:
 - Stripe keys
 - Session secret
 
-4. Set up the database:
+4. Start the development servers:
 ```bash
-npm run db:push
+# API (Firestore mode)
+npm run dev:full
+
+# Frontend (choose app)
+npm run rider:dev:full   # or driver:dev:full / admin:dev:full
 ```
 
-5. Start the development server:
-```bash
-npm run dev
-```
-
-The application will be available at `http://localhost:5000`
+API is available at `http://localhost:5000`. Frontends run on ports 5173/5174/5175.
 
 ## Deployment
 
@@ -92,15 +90,19 @@ npm run build
 Make sure to set up the following environment variables in your production environment:
 
 ```
-DATABASE_URL=your_postgres_connection_string
-FIREBASE_API_KEY=your_firebase_api_key
-FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-FIREBASE_PROJECT_ID=your_firebase_project_id
-FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
-FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-FIREBASE_APP_ID=your_firebase_app_id
-STRIPE_PUBLIC_KEY=your_stripe_public_key
+# Client (apps)
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+VITE_FIREBASE_APP_ID=your_firebase_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+# Server (API) - choose ONE method
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./service-account.json
+# OR FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", ... }'
+# OR FIREBASE_PROJECT_ID=... FIREBASE_CLIENT_EMAIL=... FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
 STRIPE_SECRET_KEY=your_stripe_secret_key
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_public_key
 SESSION_SECRET=your_session_secret
 ```
 
@@ -118,11 +120,9 @@ EcoRideConnect/
 │   │   └── types/          # TypeScript type definitions
 ├── server/                 # Backend Express application
 │   ├── index.ts           # Server entry point
-│   ├── routes.ts          # API routes
-│   ├── db.ts              # Database configuration
-│   └── seed.ts            # Database seeding
+│   ├── routes.ts          # API routes + Firestore→WS bridge
+│   └── seed.ts            # Demo data (Firestore or in-memory)
 ├── shared/                 # Shared types and schemas
-├── migrations/             # Database migrations
 └── dist/                   # Built application
 ```
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RideMap, type LatLng } from "@/components/maps/RideMap";
 import {
   Users,
@@ -45,6 +46,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import type { AdminStats, Ride } from "@/types/api";
+import { useRealtime } from "@/hooks/useRealtime";
 
 // Extended interfaces for comprehensive admin stats
 interface ExtendedAdminStats extends AdminStats {
@@ -113,31 +115,38 @@ export default function AdminDashboard() {
     ]
   };
 
-  // Mock active rides data
-  const activeRides: ActiveRideWithLocation[] = [
-    {
-      id: "1",
-      pickupLocation: "Connaught Place",
-      dropoffLocation: "India Gate",
-      status: "in_progress",
-      vehicleType: "cng_car",
-      estimatedFare: 120,
-      currentLocation: { lat: 28.6315, lng: 77.2167 },
-      dropoff: { lat: 28.6129, lng: 77.2295 },
-      driverLocation: { lat: 28.6300, lng: 77.2200 }
+  // Active rides from API + realtime updates
+  const { data: initialActive } = useQuery<any[]>({
+    queryKey: ["/api/admin/active-rides"],
+    enabled: !!user && user.role === "admin",
+  });
+  const [activeRides, setActiveRides] = useState<any[]>([]);
+  useEffect(() => { if (initialActive) setActiveRides(initialActive); }, [initialActive]);
+
+  // Handle realtime ride updates for admin
+  useRealtime({
+    filter: (m) => m.type.startsWith("ride_"),
+    onRideAdded: ({ ride }: any) => {
+      if (ride?.status === "accepted" || ride?.status === "in_progress") {
+        setActiveRides((cur) => (cur.some((r) => r.id === ride.id) ? cur : [ride, ...cur]));
+      }
     },
-    {
-      id: "2", 
-      pickupLocation: "Karol Bagh",
-      dropoffLocation: "Lajpat Nagar",
-      status: "in_progress",
-      vehicleType: "e_rickshaw",
-      estimatedFare: 89,
-      currentLocation: { lat: 28.6519, lng: 77.1909 },
-      dropoff: { lat: 28.5677, lng: 77.2431 },
-      driverLocation: { lat: 28.6500, lng: 77.1950 }
-    }
-  ];
+    onRideUpdated: ({ ride }: any) => {
+      setActiveRides((cur) => {
+        const isActive = ride?.status === "accepted" || ride?.status === "in_progress";
+        const exists = cur.some((r) => r.id === ride.id);
+        if (isActive && exists) return cur.map((r) => (r.id === ride.id ? { ...r, ...ride } : r));
+        if (isActive && !exists) return [ride, ...cur];
+        return cur.filter((r) => r.id !== ride.id);
+      });
+    },
+    onRideRemoved: ({ rideId }) => {
+      setActiveRides((cur) => cur.filter((r) => r.id !== rideId));
+    },
+    onLocationUpdate: ({ rideId, lat, lng }) => {
+      setActiveRides((cur) => cur.map((r: any) => (r.id === rideId ? { ...r, currentLocation: { lat, lng } } : r)));
+    },
+  });
 
   // Daily revenue data for chart
   const dailyRevenue = [
@@ -164,61 +173,33 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setShowNavMenu(!showNavMenu)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="font-serif text-2xl font-bold">EcoRide Admin</h1>
-              <p className="text-sm text-muted-foreground">Comprehensive Dashboard</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
+    <DashboardLayout
+      header={{
+        title: "Admin Dashboard",
+        rightActions: (
+          <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <RefreshCw className="h-4 w-4 mr-1" /> Refresh
             </Button>
             <ThemeToggle />
             <Button size="sm" variant="ghost" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
+              <LogOut className="h-4 w-4 mr-1" /> Sign Out
             </Button>
           </div>
-        </div>
-      </header>
-
-      <div className="p-6 space-y-6">
-        {/* Navigation Menu */}
-        {showNavMenu && (
-          <Card className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="ghost" className="justify-start" onClick={() => setLocation("/admin/users")}>
-                <Users className="h-4 w-4 mr-2" />
-                Users & Drivers
-              </Button>
-              <Button variant="ghost" className="justify-start" onClick={() => setLocation("/admin/payments")}>
-                <DollarSign className="h-4 w-4 mr-2" />
-                Payments
-              </Button>
-              <Button variant="ghost" className="justify-start" onClick={() => setLocation("/admin/offers")}>
-                <Gift className="h-4 w-4 mr-2" />
-                Offers & Notifications
-              </Button>
-              <Button variant="ghost" className="justify-start" onClick={() => setLocation("/admin/analytics")}>
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
-              </Button>
-            </div>
-          </Card>
-        )}
+        ),
+      }}
+      sidebar={{
+        items: [
+          { label: "Overview", href: "/admin", icon: <Activity className="h-5 w-5" /> },
+          { label: "Users & Drivers", href: "/admin/users", icon: <Users className="h-5 w-5" /> },
+          { label: "Payments", href: "/admin/payments", icon: <DollarSign className="h-5 w-5" /> },
+          { label: "Offers", href: "/admin/offers", icon: <Gift className="h-5 w-5" /> },
+          { label: "Analytics", href: "/admin/analytics", icon: <BarChart3 className="h-5 w-5" /> },
+        ],
+        onNavigate: (href) => setLocation(href),
+      }}
+    >
+      <div className="space-y-6">
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -390,15 +371,20 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Map Component */}
             <div className="h-96 rounded-lg overflow-hidden">
-              {mapsKey && (
+              {mapsKey && activeRides.length > 0 ? (
                 <RideMap
                   apiKey={mapsKey}
                   autoFit
                   height={384}
-                  pickup={activeRides[0]?.currentLocation}
-                  dropoff={activeRides[0]?.dropoff}
+                  pickup={{ lat: Number(activeRides[0]?.pickupLat) || activeRides[0]?.currentLocation?.lat || mapCenter.lat, lng: Number(activeRides[0]?.pickupLng) || activeRides[0]?.currentLocation?.lng || mapCenter.lng }}
+                  dropoff={{ lat: Number(activeRides[0]?.dropoffLat) || mapCenter.lat, lng: Number(activeRides[0]?.dropoffLng) || mapCenter.lng }}
                   rider={activeRides[0]?.currentLocation}
+                  mapTheme="dark"
                 />
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                  {mapsKey ? "No active rides yet" : "Set VITE_GOOGLE_MAPS_API_KEY to render the map"}
+                </div>
               )}
             </div>
             {/* Active Rides List */}
@@ -418,6 +404,6 @@ export default function AdminDashboard() {
           </div>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

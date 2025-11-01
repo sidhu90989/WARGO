@@ -36,7 +36,7 @@ export default function RideTrackPage() {
   const [driverLoc, setDriverLoc] = useState<LatLng | null>(null);
 
   const loadRide = async () => {
-  const res = await fetch(withApiBase(`/api/rides/${rideId}`), { credentials: "include" });
+    const res = await apiRequest("GET", `/api/rides/${rideId}`);
     if (res.ok) {
       const data = await res.json();
       setRide(data);

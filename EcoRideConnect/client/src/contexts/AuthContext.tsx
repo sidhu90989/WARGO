@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import type { User } from "@shared/schema";
-import { withApiBase } from "@/lib/apiBase";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
@@ -28,16 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const SIMPLE_AUTH = import.meta.env.VITE_SIMPLE_AUTH === 'true';
     if (SIMPLE_AUTH) {
-      // On load, try verify using session (no Authorization header)
+      // On load, try verify using session cookie
       (async () => {
         try {
-          const response = await fetch(withApiBase("/api/auth/verify"), { credentials: 'include' });
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          } else {
-            setUser(null);
-          }
+          const response = await apiRequest('GET', '/api/auth/verify');
+          const userData = await response.json();
+          setUser(userData);
         } catch (e) {
           setUser(null);
         } finally {
@@ -58,17 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (firebaseUser) {
         try {
-          const token = await firebaseUser.getIdToken();
-          const response = await fetch(withApiBase("/api/auth/verify"), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          }
+          // apiRequest will attach Authorization: Bearer <idToken>
+          const response = await apiRequest('GET', '/api/auth/verify');
+          const userData = await response.json();
+          setUser(userData);
         } catch (error) {
           console.error("Error verifying auth:", error);
         }
@@ -103,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const SIMPLE_AUTH = import.meta.env.VITE_SIMPLE_AUTH === 'true';
     try {
       if (SIMPLE_AUTH) {
-  await fetch(withApiBase('/api/auth/logout'), { method: 'POST', credentials: 'include' });
+        await apiRequest('POST', '/api/auth/logout', {});
         setUser(null);
         return;
       }

@@ -1,317 +1,7 @@
-var __defProp = Object.defineProperty;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-
-// shared/schema.ts
-var schema_exports = {};
-__export(schema_exports, {
-  driverProfiles: () => driverProfiles,
-  driverProfilesRelations: () => driverProfilesRelations,
-  ecoBadges: () => ecoBadges,
-  ecoBadgesRelations: () => ecoBadgesRelations,
-  genderEnum: () => genderEnum,
-  insertDriverProfileSchema: () => insertDriverProfileSchema,
-  insertEcoBadgeSchema: () => insertEcoBadgeSchema,
-  insertPaymentSchema: () => insertPaymentSchema,
-  insertRatingSchema: () => insertRatingSchema,
-  insertReferralSchema: () => insertReferralSchema,
-  insertRideSchema: () => insertRideSchema,
-  insertUserBadgeSchema: () => insertUserBadgeSchema,
-  insertUserSchema: () => insertUserSchema,
-  kycStatusEnum: () => kycStatusEnum,
-  paymentMethodEnum: () => paymentMethodEnum,
-  paymentStatusEnum: () => paymentStatusEnum,
-  payments: () => payments,
-  paymentsRelations: () => paymentsRelations,
-  ratings: () => ratings,
-  ratingsRelations: () => ratingsRelations,
-  referrals: () => referrals,
-  referralsRelations: () => referralsRelations,
-  rideStatusEnum: () => rideStatusEnum,
-  rides: () => rides,
-  ridesRelations: () => ridesRelations,
-  userBadges: () => userBadges,
-  userBadgesRelations: () => userBadgesRelations,
-  userRoleEnum: () => userRoleEnum,
-  users: () => users,
-  usersRelations: () => usersRelations,
-  vehicleTypeEnum: () => vehicleTypeEnum
-});
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, decimal, boolean, pgEnum } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
-var userRoleEnum, genderEnum, vehicleTypeEnum, rideStatusEnum, paymentMethodEnum, paymentStatusEnum, kycStatusEnum, users, driverProfiles, rides, payments, ratings, ecoBadges, userBadges, referrals, usersRelations, driverProfilesRelations, ridesRelations, paymentsRelations, ratingsRelations, ecoBadgesRelations, userBadgesRelations, referralsRelations, insertUserSchema, insertDriverProfileSchema, insertRideSchema, insertPaymentSchema, insertRatingSchema, insertEcoBadgeSchema, insertUserBadgeSchema, insertReferralSchema;
-var init_schema = __esm({
-  "shared/schema.ts"() {
-    "use strict";
-    userRoleEnum = pgEnum("user_role", ["rider", "driver", "admin"]);
-    genderEnum = pgEnum("gender", ["male", "female", "other", "prefer_not_to_say"]);
-    vehicleTypeEnum = pgEnum("vehicle_type", ["e_rickshaw", "e_scooter", "cng_car"]);
-    rideStatusEnum = pgEnum("ride_status", ["pending", "accepted", "in_progress", "completed", "cancelled"]);
-    paymentMethodEnum = pgEnum("payment_method", ["cash", "card", "upi", "wallet"]);
-    paymentStatusEnum = pgEnum("payment_status", ["pending", "completed", "failed", "refunded"]);
-    kycStatusEnum = pgEnum("kyc_status", ["pending", "verified", "rejected"]);
-    users = pgTable("users", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      firebaseUid: text("firebase_uid").unique(),
-      email: text("email").unique(),
-      name: text("name").notNull(),
-      phone: text("phone").unique(),
-      gender: genderEnum("gender"),
-      role: userRoleEnum("role").notNull().default("rider"),
-      profilePhoto: text("profile_photo"),
-      ecoPoints: integer("eco_points").notNull().default(0),
-      totalCO2Saved: decimal("total_co2_saved", { precision: 10, scale: 2 }).notNull().default("0"),
-      referralCode: text("referral_code").unique(),
-      referredBy: varchar("referred_by"),
-      isActive: boolean("is_active").notNull().default(true),
-      createdAt: timestamp("created_at").notNull().defaultNow(),
-      updatedAt: timestamp("updated_at").notNull().defaultNow()
-    });
-    driverProfiles = pgTable("driver_profiles", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      userId: varchar("user_id").notNull().references(() => users.id),
-      vehicleType: vehicleTypeEnum("vehicle_type").notNull(),
-      vehicleNumber: text("vehicle_number").notNull().unique(),
-      vehicleModel: text("vehicle_model"),
-      licenseNumber: text("license_number").notNull(),
-      kycStatus: kycStatusEnum("kyc_status").notNull().default("pending"),
-      kycDocuments: text("kyc_documents").array(),
-      rating: decimal("rating", { precision: 3, scale: 2 }).default("5.00"),
-      totalRides: integer("total_rides").notNull().default(0),
-      totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 }).notNull().default("0"),
-      isAvailable: boolean("is_available").notNull().default(false),
-      femalePrefEnabled: boolean("female_pref_enabled").notNull().default(false),
-      createdAt: timestamp("created_at").notNull().defaultNow(),
-      updatedAt: timestamp("updated_at").notNull().defaultNow()
-    });
-    rides = pgTable("rides", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      riderId: varchar("rider_id").notNull().references(() => users.id),
-      driverId: varchar("driver_id").references(() => users.id),
-      pickupLocation: text("pickup_location").notNull(),
-      pickupLat: decimal("pickup_lat", { precision: 10, scale: 7 }).notNull(),
-      pickupLng: decimal("pickup_lng", { precision: 10, scale: 7 }).notNull(),
-      dropoffLocation: text("dropoff_location").notNull(),
-      dropoffLat: decimal("dropoff_lat", { precision: 10, scale: 7 }).notNull(),
-      dropoffLng: decimal("dropoff_lng", { precision: 10, scale: 7 }).notNull(),
-      vehicleType: vehicleTypeEnum("vehicle_type").notNull(),
-      femalePrefRequested: boolean("female_pref_requested").notNull().default(false),
-      status: rideStatusEnum("status").notNull().default("pending"),
-      distance: decimal("distance", { precision: 10, scale: 2 }),
-      estimatedFare: decimal("estimated_fare", { precision: 10, scale: 2 }),
-      actualFare: decimal("actual_fare", { precision: 10, scale: 2 }),
-      co2Saved: decimal("co2_saved", { precision: 10, scale: 2 }),
-      ecoPointsEarned: integer("eco_points_earned").default(0),
-      requestedAt: timestamp("requested_at").notNull().defaultNow(),
-      acceptedAt: timestamp("accepted_at"),
-      startedAt: timestamp("started_at"),
-      completedAt: timestamp("completed_at"),
-      cancelledAt: timestamp("cancelled_at"),
-      createdAt: timestamp("created_at").notNull().defaultNow(),
-      updatedAt: timestamp("updated_at").notNull().defaultNow()
-    });
-    payments = pgTable("payments", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      rideId: varchar("ride_id").notNull().references(() => rides.id),
-      amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-      paymentMethod: paymentMethodEnum("payment_method").notNull(),
-      paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
-      stripePaymentIntentId: text("stripe_payment_intent_id"),
-      transactionId: text("transaction_id"),
-      createdAt: timestamp("created_at").notNull().defaultNow(),
-      updatedAt: timestamp("updated_at").notNull().defaultNow()
-    });
-    ratings = pgTable("ratings", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      rideId: varchar("ride_id").notNull().references(() => rides.id),
-      raterId: varchar("rater_id").notNull().references(() => users.id),
-      rateeId: varchar("ratee_id").notNull().references(() => users.id),
-      rating: integer("rating").notNull(),
-      feedback: text("feedback"),
-      createdAt: timestamp("created_at").notNull().defaultNow()
-    });
-    ecoBadges = pgTable("eco_badges", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      name: text("name").notNull(),
-      description: text("description"),
-      iconName: text("icon_name").notNull(),
-      requiredPoints: integer("required_points").notNull(),
-      createdAt: timestamp("created_at").notNull().defaultNow()
-    });
-    userBadges = pgTable("user_badges", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      userId: varchar("user_id").notNull().references(() => users.id),
-      badgeId: varchar("badge_id").notNull().references(() => ecoBadges.id),
-      earnedAt: timestamp("earned_at").notNull().defaultNow()
-    });
-    referrals = pgTable("referrals", {
-      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-      referrerId: varchar("referrer_id").notNull().references(() => users.id),
-      refereeId: varchar("referee_id").notNull().references(() => users.id),
-      bonusAwarded: boolean("bonus_awarded").notNull().default(false),
-      createdAt: timestamp("created_at").notNull().defaultNow()
-    });
-    usersRelations = relations(users, ({ one, many }) => ({
-      driverProfile: one(driverProfiles, {
-        fields: [users.id],
-        references: [driverProfiles.userId]
-      }),
-      ridesAsRider: many(rides, { relationName: "riderRides" }),
-      ridesAsDriver: many(rides, { relationName: "driverRides" }),
-      ratingsGiven: many(ratings, { relationName: "raterRatings" }),
-      ratingsReceived: many(ratings, { relationName: "rateeRatings" }),
-      badges: many(userBadges),
-      referralsMade: many(referrals, { relationName: "referrerReferrals" }),
-      referralsReceived: many(referrals, { relationName: "refereeReferrals" })
-    }));
-    driverProfilesRelations = relations(driverProfiles, ({ one }) => ({
-      user: one(users, {
-        fields: [driverProfiles.userId],
-        references: [users.id]
-      })
-    }));
-    ridesRelations = relations(rides, ({ one, many }) => ({
-      rider: one(users, {
-        fields: [rides.riderId],
-        references: [users.id],
-        relationName: "riderRides"
-      }),
-      driver: one(users, {
-        fields: [rides.driverId],
-        references: [users.id],
-        relationName: "driverRides"
-      }),
-      payment: one(payments),
-      ratings: many(ratings)
-    }));
-    paymentsRelations = relations(payments, ({ one }) => ({
-      ride: one(rides, {
-        fields: [payments.rideId],
-        references: [rides.id]
-      })
-    }));
-    ratingsRelations = relations(ratings, ({ one }) => ({
-      ride: one(rides, {
-        fields: [ratings.rideId],
-        references: [rides.id]
-      }),
-      rater: one(users, {
-        fields: [ratings.raterId],
-        references: [users.id],
-        relationName: "raterRatings"
-      }),
-      ratee: one(users, {
-        fields: [ratings.rateeId],
-        references: [users.id],
-        relationName: "rateeRatings"
-      })
-    }));
-    ecoBadgesRelations = relations(ecoBadges, ({ many }) => ({
-      userBadges: many(userBadges)
-    }));
-    userBadgesRelations = relations(userBadges, ({ one }) => ({
-      user: one(users, {
-        fields: [userBadges.userId],
-        references: [users.id]
-      }),
-      badge: one(ecoBadges, {
-        fields: [userBadges.badgeId],
-        references: [ecoBadges.id]
-      })
-    }));
-    referralsRelations = relations(referrals, ({ one }) => ({
-      referrer: one(users, {
-        fields: [referrals.referrerId],
-        references: [users.id],
-        relationName: "referrerReferrals"
-      }),
-      referee: one(users, {
-        fields: [referrals.refereeId],
-        references: [users.id],
-        relationName: "refereeReferrals"
-      })
-    }));
-    insertUserSchema = createInsertSchema(users).omit({
-      id: true,
-      createdAt: true,
-      updatedAt: true
-    });
-    insertDriverProfileSchema = createInsertSchema(driverProfiles).omit({
-      id: true,
-      createdAt: true,
-      updatedAt: true
-    });
-    insertRideSchema = createInsertSchema(rides).omit({
-      id: true,
-      createdAt: true,
-      updatedAt: true
-    });
-    insertPaymentSchema = createInsertSchema(payments).omit({
-      id: true,
-      createdAt: true,
-      updatedAt: true
-    });
-    insertRatingSchema = createInsertSchema(ratings).omit({
-      id: true,
-      createdAt: true
-    });
-    insertEcoBadgeSchema = createInsertSchema(ecoBadges).omit({
-      id: true,
-      createdAt: true
-    });
-    insertUserBadgeSchema = createInsertSchema(userBadges).omit({
-      id: true,
-      earnedAt: true
-    });
-    insertReferralSchema = createInsertSchema(referrals).omit({
-      id: true,
-      createdAt: true
-    });
-  }
-});
-
-// server/db.ts
-var db_exports = {};
-__export(db_exports, {
-  db: () => db,
-  pool: () => pool
-});
-import { config } from "dotenv";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
-var SIMPLE_AUTH, pool, db;
-var init_db = __esm({
-  "server/db.ts"() {
-    "use strict";
-    init_schema();
-    config();
-    SIMPLE_AUTH = process.env.SIMPLE_AUTH === "true";
-    console.log(`[db] module init. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} DATABASE_URL=${process.env.DATABASE_URL ? "SET" : "MISSING"}`);
-    if (!SIMPLE_AUTH) {
-      if (!process.env.DATABASE_URL) {
-        throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
-      }
-      neonConfig.webSocketConstructor = ws;
-      pool = new Pool({ connectionString: process.env.DATABASE_URL });
-      db = drizzle({ client: pool, schema: schema_exports });
-    } else {
-      console.log("[db] SIMPLE_AUTH=true -> skipping Neon/drizzle initialization");
-    }
-  }
-});
-
 // server/index.ts
 import { config as config4 } from "dotenv";
-import express2 from "express";
+import express from "express";
+import cors from "cors";
 import session from "express-session";
 import MemoryStoreFactory from "memorystore";
 
@@ -321,180 +11,253 @@ import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 
 // server/storage.ts
-init_schema();
 import { config as config2 } from "dotenv";
-import { eq, and, or, desc, sql as sql2 } from "drizzle-orm";
 import { customAlphabet } from "nanoid";
+import admin2 from "firebase-admin";
+
+// server/firebaseAdmin.ts
+import { config } from "dotenv";
+import admin from "firebase-admin";
+import fs from "fs";
+import path from "path";
+config();
+function ensureFirebaseAdmin() {
+  if (admin.apps.length) {
+    return admin.app();
+  }
+  const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+  const saJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+  try {
+    if (projectId) {
+      process.env.GOOGLE_CLOUD_PROJECT = projectId;
+      process.env.GCLOUD_PROJECT = projectId;
+    }
+    if (keyPath) {
+      const resolved = path.isAbsolute(keyPath) ? keyPath : path.resolve(process.cwd(), keyPath);
+      const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
+      const pid = json.project_id || projectId;
+      const app3 = admin.initializeApp({
+        credential: admin.credential.cert(json),
+        projectId: pid
+      });
+      if (pid) {
+        process.env.GOOGLE_CLOUD_PROJECT = pid;
+        process.env.GCLOUD_PROJECT = pid;
+      }
+      return app3;
+    }
+    if (saJson) {
+      const json = JSON.parse(saJson);
+      const pid = json.project_id || projectId;
+      const app3 = admin.initializeApp({
+        credential: admin.credential.cert(json),
+        projectId: pid
+      });
+      if (pid) {
+        process.env.GOOGLE_CLOUD_PROJECT = pid;
+        process.env.GCLOUD_PROJECT = pid;
+      }
+      return app3;
+    }
+    if (projectId && clientEmail && privateKey) {
+      const app3 = admin.initializeApp({
+        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+        projectId
+      });
+      return app3;
+    }
+    const app2 = admin.initializeApp();
+    return app2;
+  } catch (e) {
+    console.error("[firebase-admin] initialization failed:", e);
+    throw e;
+  }
+}
+
+// server/storage.ts
 config2();
 console.log(`[storage] module initialized. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} DATABASE_URL=${process.env.DATABASE_URL ? "SET" : "MISSING"}`);
-async function getDb() {
-  const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-  if (!db2) {
-    throw new Error("[db] Not initialized. Attempted to use database storage while SIMPLE_AUTH=true");
-  }
-  return db2;
-}
 var StorageSelector = class {
   static instance;
   static getInstance() {
     if (!this.instance) {
       const simple = process.env.SIMPLE_AUTH === "true";
-      console.log(`[storage] selecting storage. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} -> ${simple ? "memory" : "database"}`);
-      this.instance = simple ? new MemoryStorage() : new DatabaseStorage();
-      console.log(`[storage] using ${simple ? "memory" : "database"} storage`);
+      const backend = process.env.STORAGE || "";
+      console.log(`[storage] selecting storage. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} STORAGE=${backend}`);
+      if (simple) {
+        this.instance = new MemoryStorage();
+      } else if (backend.toLowerCase() === "firestore") {
+        this.instance = new FirestoreStorage();
+      } else {
+        this.instance = new FirestoreStorage();
+      }
+      const label = this.instance.constructor.name;
+      console.log(`[storage] using ${label}`);
     }
     return this.instance;
   }
 };
-var DatabaseStorage = class {
-  // User operations
+var FirestoreStorage = class {
+  db = (() => {
+    ensureFirebaseAdmin();
+    return admin2.firestore();
+  })();
+  col(name) {
+    return this.db.collection(name);
+  }
+  // Users
   async getUser(id) {
-    const db2 = await getDb();
-    const [user] = await db2.select().from(users).where(eq(users.id, id));
-    return user || void 0;
+    const snap = await this.col("users").doc(id).get();
+    return snap.exists ? { id: snap.id, ...snap.data() } : void 0;
   }
   async getUserByEmail(email) {
-    const db2 = await getDb();
-    const [user] = await db2.select().from(users).where(eq(users.email, email));
-    return user || void 0;
+    const q = await this.col("users").where("email", "==", email).limit(1).get();
+    const doc = q.docs[0];
+    return doc ? { id: doc.id, ...doc.data() } : void 0;
   }
   async getUserByFirebaseUid(firebaseUid) {
-    const db2 = await getDb();
-    const [user] = await db2.select().from(users).where(eq(users.firebaseUid, firebaseUid));
-    return user || void 0;
+    const q = await this.col("users").where("firebaseUid", "==", firebaseUid).limit(1).get();
+    const doc = q.docs[0];
+    return doc ? { id: doc.id, ...doc.data() } : void 0;
   }
-  async createUser(insertUser) {
-    const db2 = await getDb();
-    const [user] = await db2.insert(users).values(insertUser).returning();
-    return user;
+  async createUser(user) {
+    const now = /* @__PURE__ */ new Date();
+    const data = { ...user, createdAt: now, updatedAt: now };
+    const docRef = await this.col("users").add(data);
+    const snap = await docRef.get();
+    return { id: docRef.id, ...snap.data() };
   }
   async updateUser(id, updates) {
-    const db2 = await getDb();
-    const [user] = await db2.update(users).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(eq(users.id, id)).returning();
-    return user;
+    const data = { ...updates, updatedAt: /* @__PURE__ */ new Date() };
+    await this.col("users").doc(id).set(data, { merge: true });
+    const snap = await this.col("users").doc(id).get();
+    return { id, ...snap.data() };
   }
-  // Driver operations
+  // Driver profiles (doc id = userId for easy lookup)
   async getDriverProfile(userId) {
-    const db2 = await getDb();
-    const [profile] = await db2.select().from(driverProfiles).where(eq(driverProfiles.userId, userId));
-    return profile || void 0;
+    const snap = await this.col("driverProfiles").doc(userId).get();
+    return snap.exists ? { id: snap.id, ...snap.data() } : void 0;
   }
   async createDriverProfile(profile) {
-    const db2 = await getDb();
-    const [driverProfile] = await db2.insert(driverProfiles).values(profile).returning();
-    return driverProfile;
+    const data = { ...profile, createdAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() };
+    await this.col("driverProfiles").doc(profile.userId).set(data);
+    const snap = await this.col("driverProfiles").doc(profile.userId).get();
+    return { id: snap.id, ...snap.data() };
   }
   async updateDriverProfile(userId, updates) {
-    const db2 = await getDb();
-    const [profile] = await db2.update(driverProfiles).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(eq(driverProfiles.userId, userId)).returning();
-    return profile;
+    const data = { ...updates, updatedAt: /* @__PURE__ */ new Date() };
+    await this.col("driverProfiles").doc(userId).set(data, { merge: true });
+    const snap = await this.col("driverProfiles").doc(userId).get();
+    return { id: snap.id, ...snap.data() };
   }
-  // Ride operations
+  // Rides
   async createRide(ride) {
-    const db2 = await getDb();
-    const [newRide] = await db2.insert(rides).values(ride).returning();
-    return newRide;
+    const data = { ...ride, requestedAt: /* @__PURE__ */ new Date(), createdAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() };
+    const ref = await this.col("rides").add(data);
+    const snap = await ref.get();
+    return { id: ref.id, ...snap.data() };
   }
   async getRide(id) {
-    const db2 = await getDb();
-    const [ride] = await db2.select().from(rides).where(eq(rides.id, id));
-    return ride || void 0;
+    const snap = await this.col("rides").doc(id).get();
+    return snap.exists ? { id: snap.id, ...snap.data() } : void 0;
   }
   async getUserRides(userId, role) {
-    const db2 = await getDb();
-    const condition = role === "rider" ? eq(rides.riderId, userId) : eq(rides.driverId, userId);
-    return await db2.select().from(rides).where(condition).orderBy(desc(rides.createdAt));
+    const key = role === "rider" ? "riderId" : "driverId";
+    const q = await this.col("rides").where(key, "==", userId).orderBy("createdAt", "desc").get();
+    return q.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
   async getPendingRides() {
-    const db2 = await getDb();
-    return await db2.select().from(rides).where(eq(rides.status, "pending")).orderBy(rides.requestedAt);
+    const q = await this.col("rides").where("status", "==", "pending").orderBy("requestedAt", "asc").get();
+    return q.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
   async getActiveRides() {
-    const db2 = await getDb();
-    return await db2.select().from(rides).where(
-      or(
-        eq(rides.status, "accepted"),
-        eq(rides.status, "in_progress")
-      )
-    ).orderBy(desc(rides.requestedAt));
+    const q1 = await this.col("rides").where("status", "==", "accepted").get();
+    const q2 = await this.col("rides").where("status", "==", "in_progress").get();
+    const docs = [...q1.docs, ...q2.docs].sort((a, b) => +new Date(b.data().requestedAt || 0) - +new Date(a.data().requestedAt || 0));
+    return docs.map((d) => ({ id: d.id, ...d.data() }));
   }
   async updateRide(id, updates) {
-    const db2 = await getDb();
-    const [ride] = await db2.update(rides).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(eq(rides.id, id)).returning();
-    return ride;
+    await this.col("rides").doc(id).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }, { merge: true });
+    const snap = await this.col("rides").doc(id).get();
+    return { id, ...snap.data() };
   }
-  // Payment operations
+  // Payments
   async createPayment(payment) {
-    const db2 = await getDb();
-    const [newPayment] = await db2.insert(payments).values(payment).returning();
-    return newPayment;
+    const ref = await this.col("payments").add({ ...payment, createdAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() });
+    const snap = await ref.get();
+    return { id: ref.id, ...snap.data() };
   }
   async getPaymentByRide(rideId) {
-    const db2 = await getDb();
-    const [payment] = await db2.select().from(payments).where(eq(payments.rideId, rideId));
-    return payment || void 0;
+    const q = await this.col("payments").where("rideId", "==", rideId).limit(1).get();
+    const d = q.docs[0];
+    return d ? { id: d.id, ...d.data() } : void 0;
   }
-  // Rating operations
+  // Ratings
   async createRating(rating) {
-    const db2 = await getDb();
-    const [newRating] = await db2.insert(ratings).values(rating).returning();
-    return newRating;
+    const ref = await this.col("ratings").add({ ...rating, createdAt: /* @__PURE__ */ new Date() });
+    const snap = await ref.get();
+    return { id: ref.id, ...snap.data() };
   }
   async getDriverRatings(driverId) {
-    const db2 = await getDb();
-    return await db2.select().from(ratings).where(eq(ratings.rateeId, driverId)).orderBy(desc(ratings.createdAt));
+    const q = await this.col("ratings").where("rateeId", "==", driverId).orderBy("createdAt", "desc").get();
+    return q.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
-  // Badge operations
+  // Badges
   async getAllBadges() {
-    const db2 = await getDb();
-    return await db2.select().from(ecoBadges);
+    const q = await this.col("ecoBadges").get();
+    if (q.empty) {
+      const seed = [
+        { name: "Green Beginner", description: "Complete your first eco-friendly ride", iconName: "leaf", requiredPoints: 10 },
+        { name: "Eco Warrior", description: "Save 10kg of CO\u2082", iconName: "shield", requiredPoints: 100 },
+        { name: "Planet Protector", description: "Complete 25 eco-rides", iconName: "globe", requiredPoints: 250 }
+      ];
+      await Promise.all(seed.map((s) => this.col("ecoBadges").add({ ...s, createdAt: /* @__PURE__ */ new Date() })));
+      const q2 = await this.col("ecoBadges").get();
+      return q2.docs.map((d) => ({ id: d.id, ...d.data() }));
+    }
+    return q.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
   async getUserBadges(userId) {
-    const db2 = await getDb();
-    return await db2.select().from(userBadges).where(eq(userBadges.userId, userId));
+    const q = await this.col("userBadges").where("userId", "==", userId).get();
+    return q.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
   async awardBadge(userBadge) {
-    const db2 = await getDb();
-    const [badge] = await db2.insert(userBadges).values(userBadge).returning();
-    return badge;
+    const ref = await this.col("userBadges").add({ ...userBadge, earnedAt: /* @__PURE__ */ new Date() });
+    const snap = await ref.get();
+    return { id: ref.id, ...snap.data() };
   }
-  // Referral operations
+  // Referrals
   async createReferral(referral) {
-    const db2 = await getDb();
-    const [newReferral] = await db2.insert(referrals).values(referral).returning();
-    return newReferral;
+    const ref = await this.col("referrals").add({ ...referral, createdAt: /* @__PURE__ */ new Date() });
+    const snap = await ref.get();
+    return { id: ref.id, ...snap.data() };
   }
   async getUserReferrals(userId) {
-    const db2 = await getDb();
-    return await db2.select().from(referrals).where(eq(referrals.referrerId, userId));
+    const q = await this.col("referrals").where("referrerId", "==", userId).get();
+    return q.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
-  // Stats operations
+  // Stats
   async getRiderStats(userId) {
-    const db2 = await getDb();
-    const [user] = await db2.select().from(users).where(eq(users.id, userId));
-    const userRides = await db2.select().from(rides).where(and(
-      eq(rides.riderId, userId),
-      eq(rides.status, "completed")
-    ));
-    const badgeCount = await db2.select({ count: sql2`count(*)` }).from(userBadges).where(eq(userBadges.userId, userId));
+    const user = await this.getUser(userId);
+    const q = await this.col("rides").where("riderId", "==", userId).where("status", "==", "completed").get();
+    const badges = await this.getUserBadges(userId);
     return {
-      totalRides: userRides.length,
+      totalRides: q.size,
       ecoPoints: user?.ecoPoints || 0,
       totalCO2Saved: user?.totalCO2Saved || "0",
-      badgesEarned: badgeCount[0]?.count || 0
+      badgesEarned: badges.length
     };
   }
   async getDriverStats(userId) {
     const profile = await this.getDriverProfile(userId);
-    const db2 = await getDb();
-    const todayRides = await db2.select().from(rides).where(and(
-      eq(rides.driverId, userId),
-      eq(rides.status, "completed"),
-      sql2`DATE(${rides.completedAt}) = CURRENT_DATE`
-    ));
-    const todayEarnings = todayRides.reduce((sum, ride) => {
-      return sum + Number(ride.actualFare || 0);
-    }, 0);
+    const today = /* @__PURE__ */ new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const q = await this.col("rides").where("driverId", "==", userId).where("status", "==", "completed").get();
+    const todayRides = q.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => r.completedAt && new Date(r.completedAt).getTime() >= start.getTime());
+    const todayEarnings = todayRides.reduce((s, r) => s + Number(r.actualFare || 0), 0);
     return {
       totalRides: profile?.totalRides || 0,
       totalEarnings: profile?.totalEarnings || "0",
@@ -503,34 +266,29 @@ var DatabaseStorage = class {
     };
   }
   async getAdminStats() {
-    const db2 = await getDb();
-    const [userCount] = await db2.select({ count: sql2`count(*)` }).from(users);
-    const [driverCount] = await db2.select({ count: sql2`count(*)` }).from(driverProfiles).where(eq(driverProfiles.isAvailable, true));
-    const allRides = await db2.select().from(rides);
-    const completedRides = allRides.filter((r) => r.status === "completed");
-    const totalRevenue = completedRides.reduce((sum, ride) => {
-      return sum + Number(ride.actualFare || 0);
-    }, 0);
-    const totalCO2 = completedRides.reduce((sum, ride) => {
-      return sum + Number(ride.co2Saved || 0);
-    }, 0);
-    const todayRides = allRides.filter((r) => {
-      return !!(r.requestedAt && new Date(r.requestedAt).toDateString() === (/* @__PURE__ */ new Date()).toDateString());
-    });
+    const usersSnap = await this.col("users").get();
+    const driversSnap = await this.col("driverProfiles").where("isAvailable", "==", true).get();
+    const ridesSnap = await this.col("rides").get();
+    const rides = ridesSnap.docs.map((d) => d.data());
+    const completed = rides.filter((r) => r.status === "completed");
+    const totalRevenue = completed.reduce((s, r) => s + Number(r.actualFare || 0), 0);
+    const totalCO2 = completed.reduce((s, r) => s + Number(r.co2Saved || 0), 0);
+    const today = (/* @__PURE__ */ new Date()).toDateString();
+    const todayRides = rides.filter((r) => r.requestedAt && new Date(r.requestedAt).toDateString() === today);
     const vehicleStats = {
-      e_rickshaw: allRides.filter((r) => r.vehicleType === "e_rickshaw").length,
-      e_scooter: allRides.filter((r) => r.vehicleType === "e_scooter").length,
-      cng_car: allRides.filter((r) => r.vehicleType === "cng_car").length
+      e_rickshaw: rides.filter((r) => r.vehicleType === "e_rickshaw").length,
+      e_scooter: rides.filter((r) => r.vehicleType === "e_scooter").length,
+      cng_car: rides.filter((r) => r.vehicleType === "cng_car").length
     };
     return {
-      totalUsers: userCount.count,
-      activeDrivers: driverCount.count,
+      totalUsers: usersSnap.size,
+      activeDrivers: driversSnap.size,
       totalRevenue: totalRevenue.toFixed(2),
       totalCO2Saved: totalCO2.toFixed(2),
-      totalRides: allRides.length,
+      totalRides: rides.length,
       todayRides: todayRides.length,
-      weekRides: allRides.length,
-      monthRides: allRides.length,
+      weekRides: rides.length,
+      monthRides: rides.length,
       vehicleStats
     };
   }
@@ -733,42 +491,83 @@ var storage = StorageSelector.getInstance();
 
 // server/routes.ts
 import Stripe from "stripe";
-import admin from "firebase-admin";
+import admin3 from "firebase-admin";
+
+// server/integrations/nameApi.ts
+function getEnv() {
+  const isProd = process.env.NODE_ENV === "production";
+  const baseUrl = isProd ? process.env.NAME_API_BASE_URL_PROD : process.env.NAME_API_BASE_URL_DEV;
+  const token = isProd ? process.env.NAME_API_TOKEN_PROD : process.env.NAME_API_TOKEN_DEV;
+  if (!baseUrl || !token) {
+    throw new Error("[nameApi] Missing NAME_API_* envs. Please configure .env");
+  }
+  return { baseUrl, token };
+}
+async function fetchJson(path2, init) {
+  const { baseUrl, token } = getEnv();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1e4);
+  try {
+    const res = await fetch(`${baseUrl}${path2}`, {
+      ...init,
+      method: init?.method || "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        ...init?.headers || {}
+      },
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`[nameApi] ${res.status} ${res.statusText} :: ${text}`);
+    }
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+var nameApi = {
+  ping: () => fetchJson(`/ping`),
+  whoAmI: () => fetchJson(`/whoami`)
+};
+var nameApi_default = nameApi;
+
+// server/routes.ts
 config3();
-var SIMPLE_AUTH2 = process.env.SIMPLE_AUTH === "true";
+var SIMPLE_AUTH = process.env.SIMPLE_AUTH === "true";
 console.log("\u{1F527} Environment check:", {
-  SIMPLE_AUTH: SIMPLE_AUTH2,
+  SIMPLE_AUTH,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? "SET" : "NOT SET",
   NODE_ENV: process.env.NODE_ENV
 });
-if (!SIMPLE_AUTH2) {
-  if (!admin.apps.length) {
-    admin.initializeApp();
-  }
+if (!SIMPLE_AUTH) {
+  ensureFirebaseAdmin();
 }
 var stripe = (() => {
-  if (SIMPLE_AUTH2) return null;
+  if (SIMPLE_AUTH) return null;
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error("Missing required Stripe secret: STRIPE_SECRET_KEY");
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY);
 })();
 async function verifyFirebaseToken(req, res, next) {
-  if (SIMPLE_AUTH2) {
-    if (req.session?.user) {
-      req.firebaseUid = req.session.user.firebaseUid;
-      req.email = req.session.user.email;
-      return next();
-    }
+  if (req.session?.user) {
+    req.firebaseUid = req.session.user.firebaseUid;
+    req.email = req.session.user.email;
+    return next();
+  }
+  if (SIMPLE_AUTH) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  ensureFirebaseAdmin();
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   const token = authHeader.substring(7);
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    const decodedToken = await admin3.auth().verifyIdToken(token);
     req.firebaseUid = decodedToken.uid;
     req.email = decodedToken.email;
     next();
@@ -788,7 +587,13 @@ function registerSimpleAuth(app2) {
       name,
       role
     };
-    res.json({ success: true });
+    req.session.save((err) => {
+      if (err) {
+        console.error("[auth] session save failed:", err);
+        return res.status(500).json({ error: "Session save failed" });
+      }
+      res.json({ success: true });
+    });
   });
   app2.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => {
@@ -802,7 +607,10 @@ function generateReferralCode(name) {
   return `${namePart}${randomPart}`;
 }
 async function registerRoutes(app2) {
-  if (SIMPLE_AUTH2) {
+  let broadcast = () => {
+  };
+  if (SIMPLE_AUTH || process.env.ALLOW_SIMPLE_AUTH_ROUTES === "true") {
+    console.log(`[auth] registering simple-auth routes (SIMPLE_AUTH=${SIMPLE_AUTH}, ALLOW_SIMPLE_AUTH_ROUTES=${process.env.ALLOW_SIMPLE_AUTH_ROUTES})`);
     registerSimpleAuth(app2);
   }
   const verifyHandler = async (req, res) => {
@@ -874,7 +682,15 @@ async function registerRoutes(app2) {
     }
   });
   app2.get("/api/health", (_req, res) => {
-    res.json({ ok: true, mode: SIMPLE_AUTH2 ? "simple" : "full" });
+    res.json({ ok: true, mode: SIMPLE_AUTH ? "simple" : "full" });
+  });
+  app2.get("/api/integrations/name-api/whoami", async (_req, res) => {
+    try {
+      const data = await nameApi_default.whoAmI();
+      res.json({ ok: true, data });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
   });
   app2.get("/api/rider/stats", verifyFirebaseToken, async (req, res) => {
     try {
@@ -894,8 +710,8 @@ async function registerRoutes(app2) {
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      const rides2 = await storage.getUserRides(user.id, "rider");
-      res.json(rides2);
+      const rides = await storage.getUserRides(user.id, "rider");
+      res.json(rides);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -907,8 +723,8 @@ async function registerRoutes(app2) {
         return res.status(404).json({ error: "User not found" });
       }
       const allBadges = await storage.getAllBadges();
-      const userBadges2 = await storage.getUserBadges(user.id);
-      const earnedBadgeIds = new Set(userBadges2.map((ub) => ub.badgeId));
+      const userBadges = await storage.getUserBadges(user.id);
+      const earnedBadgeIds = new Set(userBadges.map((ub) => ub.badgeId));
       const badgesWithStatus = allBadges.map((badge) => ({
         ...badge,
         earned: earnedBadgeIds.has(badge.id)
@@ -957,6 +773,10 @@ async function registerRoutes(app2) {
         co2Saved: co2Saved.toString(),
         ecoPointsEarned: ecoPoints
       });
+      try {
+        broadcast({ type: "ride_added", ride });
+      } catch {
+      }
       res.json(ride);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -998,6 +818,10 @@ async function registerRoutes(app2) {
         status: "accepted",
         acceptedAt: /* @__PURE__ */ new Date()
       });
+      try {
+        broadcast({ type: "ride_updated", ride: updatedRide });
+      } catch {
+      }
       res.json(updatedRide);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -1031,6 +855,10 @@ async function registerRoutes(app2) {
           });
         }
       }
+      try {
+        broadcast({ type: "ride_updated", ride: updatedRide });
+      } catch {
+      }
       res.json(updatedRide);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -1050,6 +878,10 @@ async function registerRoutes(app2) {
         status: "in_progress",
         startedAt: /* @__PURE__ */ new Date()
       });
+      try {
+        broadcast({ type: "ride_updated", ride: updated });
+      } catch {
+      }
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -1090,8 +922,8 @@ async function registerRoutes(app2) {
       if (!driverProfile?.isAvailable) {
         return res.json([]);
       }
-      const rides2 = await storage.getPendingRides();
-      res.json(rides2);
+      const rides = await storage.getPendingRides();
+      res.json(rides);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -1132,8 +964,8 @@ async function registerRoutes(app2) {
       if (!user || user.role !== "admin") {
         return res.status(403).json({ error: "Forbidden" });
       }
-      const rides2 = await storage.getActiveRides();
-      res.json(rides2);
+      const rides = await storage.getActiveRides();
+      res.json(rides);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -1155,9 +987,57 @@ async function registerRoutes(app2) {
   });
   const httpServer = createServer(app2);
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
-  wss.on("connection", (ws2) => {
+  broadcast = (msg) => {
+    const json = JSON.stringify(msg);
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) client.send(json);
+    });
+  };
+  if (!SIMPLE_AUTH) {
+    try {
+      const db = admin3.firestore();
+      const broadcast2 = (msg) => {
+        const json = JSON.stringify(msg);
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) client.send(json);
+        });
+      };
+      db.collection("rides").onSnapshot((snap) => {
+        snap.docChanges().forEach((change) => {
+          const data = { id: change.doc.id, ...change.doc.data() };
+          if (change.type === "added") {
+            broadcast2({ type: "ride_added", ride: data });
+          } else if (change.type === "modified") {
+            broadcast2({ type: "ride_updated", ride: data });
+          } else if (change.type === "removed") {
+            broadcast2({ type: "ride_removed", rideId: change.doc.id });
+          }
+        });
+      }, (err) => {
+        console.error("[ws] rides snapshot error:", err?.message || err);
+      });
+      db.collection("driverProfiles").onSnapshot((snap) => {
+        snap.docChanges().forEach((change) => {
+          const data = { id: change.doc.id, ...change.doc.data() };
+          if (change.type === "added") {
+            broadcast2({ type: "driver_added", driver: data });
+          } else if (change.type === "modified") {
+            broadcast2({ type: "driver_updated", driver: data });
+          } else if (change.type === "removed") {
+            broadcast2({ type: "driver_removed", driverId: change.doc.id });
+          }
+        });
+      }, (err) => {
+        console.error("[ws] driverProfiles snapshot error:", err?.message || err);
+      });
+      console.log("[ws] Firestore realtime bridge initialized");
+    } catch (e) {
+      console.error("[ws] Firestore realtime bridge failed to init:", e);
+    }
+  }
+  wss.on("connection", (ws) => {
     console.log("Client connected to WebSocket");
-    ws2.on("message", (message) => {
+    ws.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
         if (data.type === "location_update") {
@@ -1178,60 +1058,16 @@ async function registerRoutes(app2) {
         console.error("WebSocket message error:", error);
       }
     });
-    ws2.on("close", () => {
+    ws.on("close", () => {
       console.log("Client disconnected from WebSocket");
     });
   });
   return httpServer;
 }
 
-// server/vite.ts
-import express from "express";
-import fs from "fs";
-import path2 from "path";
-import { createServer as createViteServer, createLogger } from "vite";
-
-// vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-var vite_config_default = defineConfig({
-  plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    ...process.env.NODE_ENV !== "production" && process.env.REPL_ID !== void 0 ? [
-      await import("@replit/vite-plugin-cartographer").then(
-        (m) => m.cartographer()
-      ),
-      await import("@replit/vite-plugin-dev-banner").then(
-        (m) => m.devBanner()
-      )
-    ] : []
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets")
-    }
-  },
-  root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true
-  },
-  server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"]
-    }
-  }
-});
-
-// server/vite.ts
-import { nanoid } from "nanoid";
-var viteLogger = createLogger();
+// server/index.ts
+config4();
+var app = express();
 function log(message, source = "express") {
   const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -1241,71 +1077,30 @@ function log(message, source = "express") {
   });
   console.log(`${formattedTime} [${source}] ${message}`);
 }
-async function setupVite(app2, server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true
-  };
-  const vite = await createViteServer({
-    ...vite_config_default,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        process.exit(1);
-      }
-    },
-    server: serverOptions,
-    appType: "custom"
-  });
-  app2.use(vite.middlewares);
-  app2.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
-    try {
-      const clientTemplate = path2.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html"
-      );
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`
-      );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e);
-      next(e);
-    }
-  });
-}
-function serveStatic(app2) {
-  const distPath = path2.resolve(import.meta.dirname, "public");
-  if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
-    );
-  }
-  app2.use(express.static(distPath));
-  app2.use("*", (_req, res) => {
-    res.sendFile(path2.resolve(distPath, "index.html"));
-  });
-}
-
-// server/index.ts
-config4();
-var app = express2();
 app.set("trust proxy", 1);
-app.use(express2.json());
-app.use(express2.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+if (process.env.FRONTEND_ORIGIN) {
+  app.use(
+    cors({
+      origin: process.env.FRONTEND_ORIGIN.split(",").map((s) => s.trim()),
+      credentials: true
+    })
+  );
+} else if (process.env.NODE_ENV !== "production") {
+  app.use(
+    cors({
+      origin: true,
+      // reflect request origin
+      credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"]
+    })
+  );
+}
 var MemoryStore = MemoryStoreFactory(session);
 var isCodespaces = !!process.env.CODESPACES;
-var forceSecure = process.env.COOKIE_SECURE === "true";
-var useSecureCookies = isCodespaces || forceSecure;
+var secureEnv = process.env.COOKIE_SECURE;
+var useSecureCookies = secureEnv ? secureEnv === "true" : isCodespaces;
 var sameSitePolicy = useSecureCookies ? "none" : "lax";
 app.use(
   session({
@@ -1328,7 +1123,7 @@ app.use(
 );
 app.use((req, res, next) => {
   const start = Date.now();
-  const path3 = req.path;
+  const path2 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -1337,8 +1132,8 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path3.startsWith("/api")) {
-      let logLine = `${req.method} ${path3} ${res.statusCode} in ${duration}ms`;
+    if (path2.startsWith("/api")) {
+      let logLine = `${req.method} ${path2} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -1358,11 +1153,6 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen({
     port,

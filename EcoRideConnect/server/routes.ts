@@ -7,6 +7,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import Stripe from "stripe";
 import admin from "firebase-admin";
+import { ensureFirebaseAdmin } from "./firebaseAdmin";
 import fs from "fs";
 import path from "path";
 import nameApi from "./integrations/nameApi";
@@ -21,27 +22,7 @@ console.log("🔧 Environment check:", {
 
 // Initialize Firebase Admin unless using SIMPLE_AUTH
 if (!SIMPLE_AUTH) {
-  if (!admin.apps.length) {
-    // Prefer explicit service account if provided (local/prod friendly), else fallback to ADC
-    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
-    try {
-      if (keyPath) {
-        const resolved = path.isAbsolute(keyPath)
-          ? keyPath
-          : path.resolve(process.cwd(), keyPath);
-        const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
-        admin.initializeApp({
-          credential: admin.credential.cert(json as any),
-        });
-      } else {
-        admin.initializeApp();
-      }
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error("[firebase-admin] initialization failed:", e);
-      throw e;
-    }
-  }
+  ensureFirebaseAdmin();
 }
 
 // Initialize Stripe only if not SIMPLE_AUTH
@@ -69,6 +50,9 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // Ensure admin SDK is ready in full mode
+  ensureFirebaseAdmin();
+  
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -98,7 +82,15 @@ function registerSimpleAuth(app: Express) {
       name,
       role,
     };
-    res.json({ success: true });
+    // Ensure session is persisted and Set-Cookie is sent
+    req.session.save((err: any) => {
+      if (err) {
+        // eslint-disable-next-line no-console
+        console.error('[auth] session save failed:', err);
+        return res.status(500).json({ error: 'Session save failed' });
+      }
+      res.json({ success: true });
+    });
   });
 
   app.post('/api/auth/logout', (req: any, res) => {
@@ -116,6 +108,8 @@ function generateReferralCode(name: string): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Simple broadcast function wired after WebSocket server is created
+  let broadcast: (msg: any) => void = () => {};
   // Enable simple auth routes either when SIMPLE_AUTH=true or when explicitly
   // allowed via env for hybrid development with a real database.
   if (SIMPLE_AUTH || process.env.ALLOW_SIMPLE_AUTH_ROUTES === 'true') {
@@ -317,6 +311,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ecoPointsEarned: ecoPoints,
       });
 
+      // In SIMPLE_AUTH or when Firestore bridge isn't available, emit WS event here
+      try { broadcast({ type: 'ride_added', ride }); } catch {}
       res.json(ride);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -369,7 +365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'accepted',
         acceptedAt: new Date(),
       });
-
+      try { broadcast({ type: 'ride_updated', ride: updatedRide }); } catch {}
       res.json(updatedRide);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -411,6 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      try { broadcast({ type: 'ride_updated', ride: updatedRide }); } catch {}
       res.json(updatedRide);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -434,6 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'in_progress',
         startedAt: new Date(),
       });
+      try { broadcast({ type: 'ride_updated', ride: updated }); } catch {}
       res.json(updated);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -570,6 +568,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // Wire broadcast now that wss is ready
+  broadcast = (msg: any) => {
+    const json = JSON.stringify(msg);
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) client.send(json);
+    });
+  };
+
+  // Firestore → WebSocket realtime bridge (when in full mode)
+  if (!SIMPLE_AUTH) {
+    try {
+      const db = admin.firestore();
+      // Broadcast helper
+      const broadcast = (msg: any) => {
+        const json = JSON.stringify(msg);
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) client.send(json);
+        });
+      };
+
+      // Rides stream: emit created/updated/deleted changes
+      db.collection('rides').onSnapshot((snap) => {
+        snap.docChanges().forEach((change) => {
+          const data = { id: change.doc.id, ...(change.doc.data() as any) };
+          if (change.type === 'added') {
+            broadcast({ type: 'ride_added', ride: data });
+          } else if (change.type === 'modified') {
+            broadcast({ type: 'ride_updated', ride: data });
+          } else if (change.type === 'removed') {
+            broadcast({ type: 'ride_removed', rideId: change.doc.id });
+          }
+        });
+      }, (err) => {
+        console.error('[ws] rides snapshot error:', err?.message || err);
+      });
+
+      // Driver availability stream
+      db.collection('driverProfiles').onSnapshot((snap) => {
+        snap.docChanges().forEach((change) => {
+          const data = { id: change.doc.id, ...(change.doc.data() as any) };
+          if (change.type === 'added') {
+            broadcast({ type: 'driver_added', driver: data });
+          } else if (change.type === 'modified') {
+            broadcast({ type: 'driver_updated', driver: data });
+          } else if (change.type === 'removed') {
+            broadcast({ type: 'driver_removed', driverId: change.doc.id });
+          }
+        });
+      }, (err) => {
+        console.error('[ws] driverProfiles snapshot error:', err?.message || err);
+      });
+
+      // Payments or admin stats could be derived on the client from ride updates.
+      console.log('[ws] Firestore realtime bridge initialized');
+    } catch (e) {
+      console.error('[ws] Firestore realtime bridge failed to init:', e);
+    }
+  }
 
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected to WebSocket');

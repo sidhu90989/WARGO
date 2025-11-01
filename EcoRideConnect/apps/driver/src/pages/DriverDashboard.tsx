@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -39,13 +40,14 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { RideMap, type LatLng } from "@/components/maps/RideMap";
+import { useRealtime } from "@/hooks/useRealtime";
 import type { DriverStats, Ride } from "@/types/api";
 
 export default function DriverDashboard() {
   const { user, signOut } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [showMenu, setShowMenu] = useState(false);
+  // Layout no longer needs local menu; DashboardLayout manages sidebar/drawer
   const [isAvailable, setIsAvailable] = useState(false);
   const [femalePref, setFemalePref] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<LatLng | null>(null);
@@ -70,7 +72,38 @@ export default function DriverDashboard() {
   const { data: pendingRides } = useQuery<Ride[]>({
     queryKey: ["/api/driver/pending-rides"],
     enabled: !!user && isAvailable,
-    refetchInterval: isAvailable ? 5000 : false,
+    refetchInterval: false,
+  });
+
+  // Local pending rides state kept in sync via realtime events
+  const [pending, setPending] = useState<Ride[]>([]);
+
+  // Seed local pending list from initial query when it changes
+  useEffect(() => {
+    if (pendingRides) setPending(pendingRides);
+  }, [pendingRides]);
+
+  // Wire realtime updates for pending rides when driver is available
+  useRealtime({
+    filter: (m) => isAvailable && (m.type === "ride_added" || m.type === "ride_updated" || m.type === "ride_removed"),
+    onRideAdded: ({ ride }: any) => {
+      if (ride?.status === "pending") {
+        setPending((cur) => (cur.some((r) => r.id === ride.id) ? cur : [ride, ...cur]));
+      }
+    },
+    onRideUpdated: ({ ride }: any) => {
+      setPending((cur) => {
+        const isPending = ride?.status === "pending";
+        const exists = cur.some((r) => r.id === ride.id);
+        if (isPending && exists) return cur.map((r) => (r.id === ride.id ? { ...r, ...ride } : r));
+        if (isPending && !exists) return [ride, ...cur];
+        // If no longer pending, drop it
+        return cur.filter((r) => r.id !== ride.id);
+      });
+    },
+    onRideRemoved: ({ rideId }) => {
+      setPending((cur) => cur.filter((r) => r.id !== rideId));
+    },
   });
 
   // Mock nearby ride requests
@@ -121,8 +154,8 @@ export default function DriverDashboard() {
 
   // Simulate new ride request notifications
   useEffect(() => {
-    if (isAvailable && pendingRides && pendingRides.length > 0) {
-      const latestRide = pendingRides[0];
+    if (isAvailable && pending && pending.length > 0) {
+      const latestRide = pending[0];
       if (latestRide.id !== newRideRequest?.id) {
         setNewRideRequest(latestRide);
         setShowRideRequest(true);
@@ -134,7 +167,7 @@ export default function DriverDashboard() {
         });
       }
     }
-  }, [pendingRides, isAvailable, newRideRequest?.id]);
+  }, [pending, isAvailable, newRideRequest?.id]);
 
   const handleToggleAvailability = async (available: boolean) => {
     try {
@@ -195,98 +228,29 @@ export default function DriverDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setShowMenu(!showMenu)}
-            data-testid="button-menu"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <h1 className="font-serif text-xl font-bold">Driver Dashboard</h1>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      {/* Side Menu */}
-      {showMenu && (
-        <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowMenu(false)}>
-          <div className="absolute left-0 top-0 h-full w-64 bg-card border-r p-6 space-y-6" onClick={(e) => e.stopPropagation()}>
-            <div className="space-y-2">
-              <h2 className="font-serif font-semibold text-xl">Menu</h2>
-              <p className="text-sm text-muted-foreground">Welcome, {user?.name}</p>
-            </div>
-            <nav className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2"
-                onClick={() => {
-                  setShowMenu(false);
-                  setLocation("/driver");
-                }}
-                data-testid="link-dashboard"
-              >
-                <TrendingUp className="h-5 w-5" />
-                Dashboard
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2"
-                onClick={() => {
-                  setShowMenu(false);
-                  setLocation("/driver/earnings");
-                }}
-                data-testid="link-earnings"
-              >
-                <DollarSign className="h-5 w-5" />
-                Earnings
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2"
-                onClick={() => {
-                  setShowMenu(false);
-                  setLocation("/driver/profile");
-                }}
-                data-testid="link-profile-verification"
-              >
-                <FileText className="h-5 w-5" />
-                Profile & KYC
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2"
-                onClick={() => {
-                  setShowMenu(false);
-                  setLocation("/leaderboard");
-                }}
-                data-testid="link-leaderboard"
-              >
-                <Star className="h-5 w-5" />
-                Leaderboard
-              </Button>
-            </nav>
-            <div className="pt-6 border-t">
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-destructive hover:text-destructive"
-                onClick={handleSignOut}
-                data-testid="button-signout"
-              >
-                <LogOut className="h-5 w-5" />
-                Sign Out
-              </Button>
-            </div>
+    <DashboardLayout
+      header={{
+        title: "Driver Dashboard",
+        rightActions: (
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" onClick={handleSignOut} data-testid="button-signout">
+              <LogOut className="h-4 w-4 mr-1" /> Sign Out
+            </Button>
           </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="p-4 space-y-6 max-w-7xl mx-auto">
+        ),
+      }}
+      sidebar={{
+        items: [
+          { label: "Dashboard", href: "/driver", icon: <TrendingUp className="h-5 w-5" /> },
+          { label: "Earnings", href: "/driver/earnings", icon: <DollarSign className="h-5 w-5" /> },
+          { label: "Profile & KYC", href: "/driver/profile", icon: <FileText className="h-5 w-5" /> },
+          { label: "Leaderboard", href: "/leaderboard", icon: <Star className="h-5 w-5" /> },
+        ],
+        onNavigate: (href) => setLocation(href),
+      }}
+    >
+      <div className="space-y-6">
         {/* Driver Availability Toggle */}
         {/* Enhanced Status Toggle */}
         <Card className="p-6 border-2 border-primary/20">
@@ -378,11 +342,22 @@ export default function DriverDashboard() {
           </div>
           <div className="relative bg-muted rounded-lg overflow-hidden" style={{ height: '300px' }}>
             {isAvailable ? (
-              <RideMap
-                apiKey="mock-api-key"
-                pickup={currentLocation || undefined}
-                height={300}
-              />
+              (() => {
+                const mapsKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+                return mapsKey ? (
+                  <RideMap
+                    apiKey={mapsKey}
+                    pickup={currentLocation || undefined}
+                    height={300}
+                    showUserDot
+                    mapTheme="dark"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                    Set VITE_GOOGLE_MAPS_API_KEY to see the map
+                  </div>
+                );
+              })()
             ) : (
               <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-800">
                 <div className="text-center space-y-2">
@@ -502,6 +477,6 @@ export default function DriverDashboard() {
 
         {/* Recent Rides & Actions would continue ... (content preserved) */}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

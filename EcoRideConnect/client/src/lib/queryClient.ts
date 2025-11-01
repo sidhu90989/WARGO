@@ -1,5 +1,21 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { withApiBase } from "./apiBase";
+import { auth } from "./firebase";
+
+const SIMPLE_AUTH = (import.meta as any).env?.VITE_SIMPLE_AUTH === 'true';
+
+async function buildAuthHeaders(base: Record<string, string> = {}): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { ...base };
+  if (!SIMPLE_AUTH && auth?.currentUser) {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      headers["Authorization"] = `Bearer ${token}`;
+    } catch {
+      // no token available; treat as unauthenticated
+    }
+  }
+  return headers;
+}
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -24,9 +40,10 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const headers = await buildAuthHeaders(data ? { "Content-Type": "application/json" } : {});
   const res = await fetch(withApiBase(url), {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -41,8 +58,10 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const headers = await buildAuthHeaders();
     const res = await fetch(withApiBase(queryKey.join("/") as string), {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

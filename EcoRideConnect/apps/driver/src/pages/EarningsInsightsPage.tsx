@@ -34,6 +34,8 @@ import {
   Filter
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { TrendingUp as TrendingUpIcon, DollarSign as DollarSignIcon, FileText as FileTextIcon, Star as StarIcon } from "lucide-react";
 
 interface EarningsData {
   today: number;
@@ -141,28 +143,28 @@ export default function EarningsInsightsPage() {
   const maxEarning = Math.max(...dailyEarnings.map(d => d.amount));
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card border-b">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setLocation("/driver")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="font-serif text-xl font-bold">Earnings & Insights</h1>
+    <DashboardLayout
+      header={{
+        title: "Earnings & Insights",
+        rightActions: (
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+              <Download className="h-4 w-4 mr-2" /> Export
             </Button>
             <ThemeToggle />
           </div>
-        </div>
-      </header>
-
+        ),
+      }}
+      sidebar={{
+        items: [
+          { label: "Dashboard", href: "/driver", icon: <TrendingUpIcon className="h-5 w-5" /> },
+          { label: "Earnings", href: "/driver/earnings", icon: <DollarSignIcon className="h-5 w-5" /> },
+          { label: "Profile & KYC", href: "/driver/profile", icon: <FileTextIcon className="h-5 w-5" /> },
+          { label: "Leaderboard", href: "/leaderboard", icon: <StarIcon className="h-5 w-5" /> },
+        ],
+        onNavigate: (href) => setLocation(href),
+      }}
+    >
       <div className="p-4 space-y-6">
         {/* Quick Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -408,6 +410,6 @@ export default function EarningsInsightsPage() {
           </div>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

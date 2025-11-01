@@ -39,6 +39,8 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { Activity, Users as UsersIcon, DollarSign, Gift, BarChart3 } from "lucide-react";
 
 interface User {
   id: string;
@@ -200,15 +202,23 @@ export default function UsersDriversPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Users & Drivers</h1>
-          <p className="text-sm text-muted-foreground">Manage platform users, drivers and complaints</p>
-        </div>
-        <ThemeToggle />
-      </div>
-
+    <DashboardLayout
+      header={{
+        title: "Users & Drivers",
+        rightActions: <ThemeToggle />,
+      }}
+      sidebar={{
+        items: [
+          { label: "Overview", href: "/admin", icon: <Activity className="h-5 w-5" /> },
+          { label: "Users & Drivers", href: "/admin/users", icon: <UsersIcon className="h-5 w-5" /> },
+          { label: "Payments", href: "/admin/payments", icon: <DollarSign className="h-5 w-5" /> },
+          { label: "Offers", href: "/admin/offers", icon: <Gift className="h-5 w-5" /> },
+          { label: "Analytics", href: "/admin/analytics", icon: <BarChart3 className="h-5 w-5" /> },
+        ],
+        onNavigate: (href) => setLocation(href),
+      }}
+    >
+      <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="users">Users</TabsTrigger>
@@ -310,6 +320,7 @@ export default function UsersDriversPage() {
 
         {/* Other tabs omitted for brevity; retain original structure if needed */}
       </Tabs>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

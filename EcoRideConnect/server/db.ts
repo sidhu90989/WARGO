@@ -1,30 +1,11 @@
+// Deprecated module: SQL/Neon backend removed.
+// This file remains as a stub to avoid breaking old imports.
+// The application now uses Firestore via firebase-admin in storage.ts.
 import { config } from "dotenv";
 config();
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
-import * as schema from "@shared/schema";
-
-// Determine if we should initialize the database
-const SIMPLE_AUTH = process.env.SIMPLE_AUTH === 'true';
 
 // eslint-disable-next-line no-console
-console.log(`[db] module init. SIMPLE_AUTH=${process.env.SIMPLE_AUTH} DATABASE_URL=${process.env.DATABASE_URL ? 'SET' : 'MISSING'}`);
+console.warn('[db] Deprecated: SQL/Neon backend has been removed. Using Firestore instead.');
 
-let pool: Pool | undefined;
-let db: ReturnType<typeof drizzle> | undefined;
-
-if (!SIMPLE_AUTH) {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
-  }
-  // Configure Neon only when using DB
-  neonConfig.webSocketConstructor = ws;
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  db = drizzle({ client: pool, schema });
-} else {
-  // eslint-disable-next-line no-console
-  console.log('[db] SIMPLE_AUTH=true -> skipping Neon/drizzle initialization');
-}
-
-export { pool, db };
+export const pool = undefined as unknown as never;
+export const db = undefined as unknown as never;
