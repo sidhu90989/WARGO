@@ -25,6 +25,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // CORS for separate frontend origin (e.g., Vercel) while sending cookies
+// In development (Codespaces/local), allow any origin so previews work.
 if (process.env.FRONTEND_ORIGIN) {
   app.use(
     cors({
@@ -32,13 +33,22 @@ if (process.env.FRONTEND_ORIGIN) {
       credentials: true,
     }),
   );
+} else if (process.env.NODE_ENV !== 'production') {
+  app.use(
+    cors({
+      origin: true, // reflect request origin
+      credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }),
+  );
 }
 
 // Session setup for SIMPLE_AUTH/local dev flows
 const MemoryStore = MemoryStoreFactory(session);
 const isCodespaces = !!process.env.CODESPACES;
-const forceSecure = process.env.COOKIE_SECURE === 'true';
-const useSecureCookies = isCodespaces || forceSecure;
+// Allow explicit override via COOKIE_SECURE. If not set, default to secure in Codespaces.
+const secureEnv = process.env.COOKIE_SECURE; // 'true' | 'false' | undefined
+const useSecureCookies = secureEnv ? secureEnv === 'true' : isCodespaces;
 const sameSitePolicy: "lax" | "none" = useSecureCookies ? "none" : "lax";
 app.use(
   session({
