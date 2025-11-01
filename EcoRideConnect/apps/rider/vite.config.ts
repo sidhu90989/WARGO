@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from 'vite-plugin-pwa';
 import path from "path";
+import tailwindcss from "tailwindcss";
+import autoprefixer from "autoprefixer";
 
 export default defineConfig({
   plugins: [
@@ -57,6 +59,12 @@ export default defineConfig({
     },
   },
   base: process.env.VITE_BASE_PATH || "/",
+  css: {
+    postcss: {
+      // Inline PostCSS config to avoid load-config edge cases and warnings
+      plugins: [tailwindcss(), autoprefixer()],
+    },
+  },
   server: {
     port: 5173,
     host: true,
