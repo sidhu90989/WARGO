@@ -1,9 +1,9 @@
-# Neon Database Setup for EcoRide
+# Neon Database Setup for WARGO
 
 ## Step 1: Create Neon Account
 1. Go to [console.neon.tech](https://console.neon.tech)
 2. Sign up with GitHub/Google
-3. Create a new project: "EcoRide"
+3. Create a new project: "WARGO"
 
 ## Step 2: Get Connection String
 1. Go to Dashboard > Connection Details

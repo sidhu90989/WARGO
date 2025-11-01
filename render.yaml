@@ -1,9 +1,9 @@
-# Render Blueprint for EcoRideConnect
+# Render Blueprint for WARGO
 # Docs: https://render.com/docs/blueprint-spec
 
 services:
   - type: web
-    name: ecoride-connect
+  name: wargo
     env: node
     plan: free
     autoDeploy: true

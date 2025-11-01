@@ -142,7 +142,7 @@ export default function RiderDashboard() {
               <Menu className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="font-serif text-xl font-bold">EcoRide</h1>
+              <h1 className="font-serif text-xl font-bold">{((import.meta as any).env?.VITE_APP_NAME as string) || 'WARGO'} {((import.meta as any).env?.VITE_APP_SUBTITLE as string) ? <span className="ml-1 text-[10px] uppercase tracking-widest text-muted-foreground">{(import.meta as any).env?.VITE_APP_SUBTITLE}</span> : null}</h1>
               <p className="text-xs text-muted-foreground">Sustainable transport</p>
             </div>
           </div>
@@ -298,7 +298,7 @@ export default function RiderDashboard() {
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <MapPin className="h-6 w-6 text-primary" />
-            <h2 className="font-serif text-xl font-semibold">Book Your Eco Ride</h2>
+            <h2 className="font-serif text-xl font-semibold">Book Your WARGO Ride</h2>
           </div>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -311,7 +311,7 @@ export default function RiderDashboard() {
             </div>
             <Button className="w-full" size="lg" onClick={handleBookRide}>
               <Navigation className="h-4 w-4 mr-2" />
-              Find Eco Rides
+              Find WARGO Rides
             </Button>
           </div>
         </Card>
@@ -328,7 +328,7 @@ export default function RiderDashboard() {
         {mapsKey && (
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-lg font-semibold">Nearby Eco Vehicles</h3>
+              <h3 className="font-serif text-lg font-semibold">Nearby WARGO Vehicles</h3>
               <Badge variant="secondary">
                 <Car className="h-3 w-3 mr-1" />
                 12 available

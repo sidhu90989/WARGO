@@ -9,14 +9,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'EcoRide Driver',
-        short_name: 'EcoRide Driver',
-        description: 'Eco-friendly ridesharing for drivers',
+        name: 'WARGO PARTNER',
+        short_name: 'WARGO PARTNER',
+        description: 'Driver app for WARGO',
         theme_color: '#00A86B',
         background_color: '#ffffff',
         icons: [
-          { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
       },
     }),

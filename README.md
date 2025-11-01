@@ -1,6 +1,6 @@
-# EcoRide Connect 🌱🚗
+# WARGO 🌱🚗
 
-A sustainable rideshare platform that connects eco-conscious drivers and riders, promoting environmental responsibility through shared transportation.
+WARGO is a sustainable ride-sharing platform connecting eco-conscious drivers and riders, promoting environmental responsibility through shared transportation.
 
 ## Features
 
@@ -42,8 +42,8 @@ A sustainable rideshare platform that connects eco-conscious drivers and riders,
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/sidhu90989/Echo-Ride.git
-cd Echo-Ride/EcoRideConnect
+git clone <your-repo-url>
+cd EcoRideConnect
 ```
 
 2. Install dependencies:
@@ -72,11 +72,11 @@ npm run db:push
 npm run dev
 ```
 
-The application will be available at `http://localhost:5000`
+The API server will be available at `http://localhost:5000`. The Rider/Driver/Admin apps run on their own Vite dev servers (see Development Guide).
 
 ## Deployment
 
-This project is automatically deployed to GitHub Pages when changes are pushed to the main branch.
+This project can be deployed to GitHub Pages for static apps and to Render for the API as configured.
 
 ### Manual Deployment
 

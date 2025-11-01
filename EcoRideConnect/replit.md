@@ -1,7 +1,7 @@
-# EcoRide - Eco-Friendly Ride Sharing Platform
+# WARGO - Eco-Friendly Ride Sharing Platform
 
 ## Overview
-EcoRide is a comprehensive ride-sharing platform focused on eco-friendly transportation using E-Rickshaws, E-Scooters, and CNG Cars. The platform includes three role-based modules: Rider App, Driver App, and Admin Dashboard.
+WARGO is a comprehensive ride-sharing platform focused on eco-friendly transportation using E-Rickshaws, E-Scooters, and CNG Cars. The platform includes three role-based modules: Rider App, Driver App, and Admin Dashboard.
 
 ## Project Architecture
 

@@ -31,19 +31,19 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ecoride-build
+          name: wargo-build
           path: |
             EcoRideConnect/dist
 
   deploy-render:
     needs: build
-    if: ${{ secrets.RENDER_SERVICE_ID && secrets.RENDER_API_KEY }}
     runs-on: ubuntu-latest
+    env:
+      RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+    if: ${{ env.RENDER_SERVICE_ID != '' && env.RENDER_API_KEY != '' }}
     steps:
       - name: Trigger Render deploy
-        env:
-          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           echo "Triggering Render deploy for service $RENDER_SERVICE_ID"
           curl -s -X POST \
@@ -55,8 +55,11 @@ jobs:
 
   deploy-vercel:
     needs: build
-    if: ${{ secrets.VERCEL_TOKEN && secrets.VERCEL_PROJECT_ID }}
     runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_PROJECT_ID != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,9 +68,6 @@ jobs:
         run: npm i -g vercel
 
       - name: Deploy frontend to Vercel (if configured)
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         working-directory: EcoRideConnect/client
         run: |
           # Use Vercel CLI to redeploy the client. This requires the Vercel project to be pre-configured.

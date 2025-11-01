@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Setting up EcoRide Database"
+echo "🚀 Setting up WARGO Database"
 echo "=============================="
 
 # Check if .env exists
