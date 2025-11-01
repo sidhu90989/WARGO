@@ -38,6 +38,7 @@ if (process.env.FRONTEND_ORIGIN) {
     cors({
       origin: true, // reflect request origin
       credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"],
     }),
   );
 }
@@ -45,8 +46,9 @@ if (process.env.FRONTEND_ORIGIN) {
 // Session setup for SIMPLE_AUTH/local dev flows
 const MemoryStore = MemoryStoreFactory(session);
 const isCodespaces = !!process.env.CODESPACES;
-const forceSecure = process.env.COOKIE_SECURE === 'true';
-const useSecureCookies = isCodespaces || forceSecure;
+// Allow explicit override via COOKIE_SECURE. If not set, default to secure in Codespaces.
+const secureEnv = process.env.COOKIE_SECURE; // 'true' | 'false' | undefined
+const useSecureCookies = secureEnv ? secureEnv === 'true' : isCodespaces;
 const sameSitePolicy: "lax" | "none" = useSecureCookies ? "none" : "lax";
 app.use(
   session({

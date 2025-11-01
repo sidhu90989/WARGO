@@ -24,16 +24,32 @@ if (!SIMPLE_AUTH) {
   if (!admin.apps.length) {
     // Prefer explicit service account if provided (local/prod friendly), else fallback to ADC
     const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+    const saJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    // Private key may contain escaped newlines when injected from env; normalize them
+    const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+
     try {
       if (keyPath) {
         const resolved = path.isAbsolute(keyPath)
           ? keyPath
           : path.resolve(process.cwd(), keyPath);
         const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
+        admin.initializeApp({ credential: admin.credential.cert(json as any) });
+      } else if (saJson) {
+        const json = JSON.parse(saJson);
+        admin.initializeApp({ credential: admin.credential.cert(json as any) });
+      } else if (projectId && clientEmail && privateKey) {
         admin.initializeApp({
-          credential: admin.credential.cert(json as any),
+          credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey,
+          } as any),
         });
       } else {
+        // Application Default Credentials (e.g., when running on GCP)
         admin.initializeApp();
       }
     } catch (e) {
@@ -98,7 +114,15 @@ function registerSimpleAuth(app: Express) {
       name,
       role,
     };
-    res.json({ success: true });
+    // Ensure session is persisted and Set-Cookie is sent
+    req.session.save((err: any) => {
+      if (err) {
+        // eslint-disable-next-line no-console
+        console.error('[auth] session save failed:', err);
+        return res.status(500).json({ error: 'Session save failed' });
+      }
+      res.json({ success: true });
+    });
   });
 
   app.post('/api/auth/logout', (req: any, res) => {
