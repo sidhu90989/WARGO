@@ -20,11 +20,11 @@
     "build:driver": "npm run driver:build",
     "build:admin": "npm run admin:build",
     "build:apps": "npm run build:rider && npm run build:driver && npm run build:admin",
-    "deploy:rider": "npm run build:rider && firebase deploy --only hosting:rider",
-    "deploy:driver": "npm run build:driver && firebase deploy --only hosting:driver",
-    "deploy:admin": "npm run build:admin && firebase deploy --only hosting:admin",
-    "deploy:hosting": "npm run build:apps && firebase deploy --only hosting",
-    "deploy:all": "npm run build:apps && firebase deploy"
+    "deploy:rider": "npm run build:rider && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting:rider",
+    "deploy:driver": "npm run build:driver && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting:driver",
+    "deploy:admin": "npm run build:admin && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting:admin",
+    "deploy:hosting": "npm run build:apps && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting",
+    "deploy:all": "npm run build:apps && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

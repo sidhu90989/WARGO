@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       manifest: {
         name: 'WARGO PARTNER',
-        short_name: 'WARGO PARTNER',
-        description: 'Driver app for WARGO',
-        theme_color: '#00A86B',
+        short_name: 'WARGO Driver',
+        description: 'WARGO Partner Driver Application',
+        theme_color: '#000000',
         background_color: '#ffffff',
         icons: [
           { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
