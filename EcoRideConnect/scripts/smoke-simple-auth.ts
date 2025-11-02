@@ -57,3 +57,4 @@ run().catch((e) => {
   console.error('Smoke test failed:', e);
   process.exit(1);
 });
+export {};

@@ -102,6 +102,26 @@ By default, the client connects to `VITE_SOCKET_URL` or derives `ws://` from `VI
 
 You can deploy the API and web apps to your preferred platform (e.g., a Node.js host or container platform). This repo no longer contains provider-specific deployment files; wire it up in your infra of choice.
 
+### Domains and CORS
+
+- Recommended layout:
+	- API/App Hosting: `https://wargo.com` (apex)
+	- Rider app (Hosting): `https://ride.wargo.com`
+	- Driver app (Hosting): `https://partner.wargo.com`
+	- Admin app (Hosting): `https://admin.wargo.com`
+
+Set CORS allowlist in server env:
+
+```
+FRONTEND_ORIGIN=https://ride.wargo.com,https://partner.wargo.com,https://admin.wargo.com
+# or set individually
+RIDER_ORIGIN=https://ride.wargo.com
+DRIVER_ORIGIN=https://partner.wargo.com
+ADMIN_ORIGIN=https://admin.wargo.com
+```
+
+In Firebase Auth > Settings > Authorized domains, add all the above domains plus the API domain.
+
 ### Manual Deployment
 
 1. Build the application:
@@ -126,6 +146,16 @@ FIREBASE_APP_ID=your_firebase_app_id
 STRIPE_PUBLIC_KEY=your_stripe_public_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 SESSION_SECRET=your_session_secret
+SIMPLE_AUTH=false
+# expose simple session login endpoints while you test DB mode (optional for staging only)
+ALLOW_SIMPLE_AUTH_ROUTES=true
+COOKIE_SECURE=true
+FRONTEND_ORIGIN=https://ride.wargo.com,https://partner.wargo.com,https://admin.wargo.com
+
+# Firebase Admin (one of the following)
+# Option A: Explicit service account JSON
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./service-account.json
+# Option B: Rely on Application Default Credentials on the host
 ```
 
 ## Project Structure
@@ -169,3 +199,35 @@ For support, please contact [your-email@example.com] or open an issue on GitHub.
 ---
 
 Made with 💚 for a sustainable future
+
+## DB mode quick start (local or staging)
+
+1) Ensure Postgres is available and set `DATABASE_URL`.
+2) Switch to DB mode and expose simple login endpoints for testing:
+
+```
+SIMPLE_AUTH=false
+ALLOW_SIMPLE_AUTH_ROUTES=true
+SESSION_SECRET=some-long-random
+```
+
+3) Run migrations:
+
+```
+cd EcoRideConnect
+npm run db:migrate
+```
+
+4) Start API (from `EcoRideConnect/`):
+
+```
+npm run dev
+```
+
+5) Run the DB-mode smoke test in another terminal:
+
+```
+npm run smoke:db
+```
+
+This script will exercise rider/driver/admin flows using session cookies (no Firebase token required) while the server persists data to Postgres.
