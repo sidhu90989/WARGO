@@ -1,4 +1,4 @@
-# Firebase Multi-Site Hosting for WARGO (Rider, Driver, Admin)
+# Firebase Hosting (only) for WARGO (Rider, Driver, Admin)
 
 This guide adapts the multi-site Firebase strategy to this repository's structure.
 
@@ -10,12 +10,12 @@ This guide adapts the multi-site Firebase strategy to this repository's structur
 
 ## Prerequisites
 - Firebase CLI installed and logged in: `npm i -g firebase-tools` then `firebase login`
-- A Firebase project created (replace placeholders in `.firebaserc`)
-- Decide your custom domains
+- A Firebase project created (see `.firebaserc`)
+- Decide your custom domains (Hosted on Firebase Hosting, not App Hosting):
   - Rider: `rider.your-domain.com`
   - Driver: `driver.your-domain.com`
   - Admin: `admin.your-domain.com`
-  - Backend: `api.your-domain.com` (where you deploy `EcoRideConnect/server`)
+  - Backend: `api.your-domain.com` (your own Node host for `EcoRideConnect/server`)
 
 ## Configure Firebase files
 - `firebase.json` and `.firebaserc` are in the repo root. Update `.firebaserc`:
@@ -42,7 +42,7 @@ Server CORS: The API server allows multiple origins. Set one of the following in
 
 Local dev ports 5173/5174/5175 are allowed by default.
 
-## Create Firebase Hosting sites
+## Create Firebase Hosting sites (one-time)
 ```
 firebase hosting:sites:create rider-wargo
 firebase hosting:sites:create driver-wargo
@@ -52,7 +52,7 @@ firebase hosting:sites:create admin-wargo
 firebase hosting:sites:list
 ```
 
-Update `.firebaserc` targets if you used different site IDs.
+Update `.firebaserc` targets if you used different site IDs. This repository deploys these static sites to Firebase Hosting only.
 
 ## Build scripts and deploy
 From `EcoRideConnect/` directory (or repo root):
@@ -71,21 +71,18 @@ npm run deploy:admin
 
 Note: We don't deploy Cloud Functions in this repo. The API is an Express server you deploy to your own hosting platform (e.g., your VPS or managed Node runtime). Point `VITE_API_URL` to that host.
 
-If you're using Firebase App Hosting's GitHub integration UI, fill in:
-- Live branch: `main`
-- App root directory: one of `EcoRideConnect` (recommended) or the specific app folder, e.g. `EcoRideConnect/apps/rider`
-- Build command:
-  - Rider: `npm ci && npm run build:rider`
-  - Driver: `npm ci && npm run build:driver`
-  - Admin: `npm ci && npm run build:admin`
-- Output directory (relative to repo root if root is repo, else relative to chosen app root):
-  - Rider: `EcoRideConnect/dist/rider` (or `dist/rider` if root is `EcoRideConnect`)
-  - Driver: `EcoRideConnect/dist/driver` (or `dist/driver`)
-  - Admin: `EcoRideConnect/dist/admin` (or `dist/admin`)
+## Use Hosting only (and disable App Hosting)
+This project uses Firebase Hosting exclusively for the Rider/Driver/Admin web apps.
 
-## Connect custom domains (Firebase Console)
+If you previously set up Firebase App Hosting backends, disable them to avoid duplicate rollouts and domain conflicts:
+1. Firebase Console → App Hosting → Backends → open each backend (rider/driver/admin).
+2. Pause or remove rollouts and disconnect any attached domains.
+3. Manage domains only from Firebase Hosting (Console → Hosting → Sites).
+
+## Connect custom domains (Firebase Hosting)
 - Firebase Console → Hosting → For each site (rider/driver/admin) → Add custom domain
-- Add DNS CNAMEs per Firebase instructions and verify SSL
+- For apex domains, Hosting will provide A/AAAA records. For subdomains, it will provide CNAME.
+- Add records at your DNS provider and wait for verification/SSL.
 
 ## Backend CORS and WebSocket
 The server at `EcoRideConnect/server/index.ts` now:
