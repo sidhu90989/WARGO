@@ -281,3 +281,31 @@ export type UserBadge = typeof userBadges.$inferSelect;
 export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
 export type Referral = typeof referrals.$inferSelect;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
+
+// Lightweight app-facing types (non-DB) for shared UI contracts
+// These do not change database schema; they provide simplified shapes
+// requested by the integration brief.
+export interface Location {
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+export interface SimpleUser {
+  id: string;
+  phone: string | null;
+  name: string;
+  role: 'rider' | 'driver' | 'admin';
+  createdAt: Date;
+}
+
+export interface SimpleRide {
+  id: string;
+  riderId: SimpleUser['id'];
+  driverId?: SimpleUser['id'];
+  pickup: Location;
+  drop: Location;
+  status: 'requested' | 'accepted' | 'ongoing' | 'completed' | 'cancelled';
+  fare?: number;
+  createdAt: Date;
+}

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { RecaptchaVerifier } from "firebase/auth";
+import { auth as firebaseAuth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,13 +16,16 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
-  const { signInWithGoogle, setUser } = useAuth();
+  const { signInWithGoogle, setUser, startPhoneLogin, confirmPhoneLogin } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"rider" | "driver" | "admin">("rider");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneMode, setPhoneMode] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [confirmation, setConfirmation] = useState<any>(null);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -39,6 +44,44 @@ export default function LoginPage() {
         description: "Could not sign in with Google. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhoneStart = async () => {
+    const SIMPLE_AUTH = import.meta.env.VITE_SIMPLE_AUTH === 'true';
+    if (SIMPLE_AUTH) {
+      toast({ title: "Phone login requires Firebase", description: "Set VITE_SIMPLE_AUTH=false in .env to enable Firebase auth.", variant: "destructive" });
+      return;
+    }
+    try {
+      setLoading(true);
+      // Ensure a recaptcha container exists
+      const containerId = 'recaptcha-container';
+      let verifier = (window as any).recaptchaVerifier as any;
+      if (!verifier) {
+        verifier = new RecaptchaVerifier(firebaseAuth as any, containerId, { size: 'invisible' } as any);
+        (window as any).recaptchaVerifier = verifier;
+      }
+      const conf = await startPhoneLogin(phone, verifier);
+      setConfirmation(conf);
+      toast({ title: "Code sent", description: "Enter the OTP you received." });
+    } catch (e) {
+      toast({ title: "Failed to start phone login", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhoneConfirm = async () => {
+    if (!confirmation) return;
+    try {
+      setLoading(true);
+      await confirmPhoneLogin(confirmation, otp);
+      setShowRoleSelection(true);
+    } catch (e) {
+      toast({ title: "Invalid code", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -155,16 +198,29 @@ export default function LoginPage() {
                   <span className="bg-card px-2 text-muted-foreground">or</span>
                 </div>
               </div>
-
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                disabled
-                size="lg"
-              >
-                <Mail className="h-5 w-5" />
-                Continue with Email (Coming Soon)
-              </Button>
+              <div className="space-y-3">
+                {!phoneMode ? (
+                  <Button variant="outline" className="w-full" size="lg" onClick={() => setPhoneMode(true)}>
+                    Use Phone Number
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input id="phone" placeholder="+91 XXXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button className="flex-1" onClick={handlePhoneStart} disabled={loading || !phone}>Send Code</Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="otp">OTP</Label>
+                      <Input id="otp" placeholder="6-digit code" value={otp} onChange={(e) => setOtp(e.target.value)} />
+                    </div>
+                    <Button className="w-full" onClick={handlePhoneConfirm} disabled={loading || !otp}>Verify</Button>
+                    <div id="recaptcha-container" />
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-6">

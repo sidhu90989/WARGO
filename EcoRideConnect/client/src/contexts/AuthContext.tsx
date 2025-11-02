@@ -3,7 +3,10 @@ import {
   User as FirebaseUser, 
   signInWithPopup, 
   signOut as firebaseSignOut,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  signInWithPhoneNumber,
+  type ApplicationVerifier,
+  type ConfirmationResult,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import type { User } from "@shared/schema";
@@ -16,6 +19,8 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   setUser: (user: User | null) => void;
+  startPhoneLogin: (phone: string, verifier: ApplicationVerifier) => Promise<ConfirmationResult>;
+  confirmPhoneLogin: (confirmation: ConfirmationResult, code: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -120,8 +125,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const startPhoneLogin = async (phone: string, verifier: ApplicationVerifier) => {
+    if (!auth) throw new Error("Firebase auth not initialized");
+    return await signInWithPhoneNumber(auth, phone, verifier);
+  };
+
+  const confirmPhoneLogin = async (confirmation: ConfirmationResult, code: string) => {
+    await confirmation.confirm(code);
+    // onAuthStateChanged will update user
+  };
+
   return (
-    <AuthContext.Provider value={{ firebaseUser, user, loading, signInWithGoogle, signOut, setUser }}>
+    <AuthContext.Provider value={{ firebaseUser, user, loading, signInWithGoogle, signOut, setUser, startPhoneLogin, confirmPhoneLogin }}>
       {children}
     </AuthContext.Provider>
   );

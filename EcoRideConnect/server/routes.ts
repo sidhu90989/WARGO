@@ -3,7 +3,7 @@ config(); // Load environment variables
 
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
+import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import Stripe from "stripe";
 import admin from "firebase-admin";
@@ -568,39 +568,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  // WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // Socket.IO server for real-time updates
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: true, // reflect request origin in dev
+      credentials: true,
+    },
+    path: "/socket.io",
+  });
 
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('Client connected to WebSocket');
+  io.on('connection', (socket) => {
+    console.log('Client connected to Socket.IO');
 
-    ws.on('message', (message: string) => {
+    socket.on('disconnect', () => {
+      console.log('Client disconnected from Socket.IO');
+    });
+
+    // Receive location updates from drivers/riders and broadcast
+    socket.on('location_update', (data: any) => {
       try {
-        const data = JSON.parse(message.toString());
-        
-        // Handle different message types
-        if (data.type === 'location_update') {
-          // Broadcast location to relevant clients
-          wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'location_update',
-                rideId: data.rideId,
-                lat: data.lat,
-                lng: data.lng,
-                who: data.who || 'unknown',
-                at: Date.now(),
-              }));
-            }
-          });
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
+        const payload = {
+          rideId: data?.rideId,
+          lat: Number(data?.lat),
+          lng: Number(data?.lng),
+          who: data?.who || 'unknown',
+          at: Date.now(),
+        };
+        io.emit('driver_location', payload);
+      } catch (e) {
+        console.error('socket.on(location_update) error:', e);
       }
     });
 
-    ws.on('close', () => {
-      console.log('Client disconnected from WebSocket');
+    // Placeholder: relay ride status updates if needed later
+    socket.on('ride_status_update', (data: any) => {
+      io.emit('ride_status_update', { ...data, at: Date.now() });
+    });
+
+    // Placeholder: new ride request broadcast
+    socket.on('ride_request', (data: any) => {
+      io.emit('ride_request', { ...data, at: Date.now() });
     });
   });
 

@@ -74,6 +74,30 @@ npm run dev
 
 The API server will be available at `http://localhost:5000`. The Rider/Driver/Admin apps run on their own Vite dev servers (see Development Guide).
 
+### Realtime and Firebase Integration
+
+- Centralized Firebase config at `EcoRideConnect/shared/lib/firebase.ts`
+- Shared WebSocket client at `EcoRideConnect/shared/realtime/socketClient.ts`
+- Per-app environment overrides in `EcoRideConnect/apps/*/.env`
+
+#### WebSocket usage (in any app)
+```ts
+import socketService from '@shared/realtime/socketClient';
+
+// Connect once on app mount
+socketService.connect('rider');
+
+// Listen for events
+const off = socketService.on('driver_location', (evt) => {
+	console.log('Driver location', evt);
+});
+
+// Later: stop listening
+off();
+```
+
+By default, the client connects to `VITE_SOCKET_URL` or derives `ws://` from `VITE_API_URL` (e.g. `http://localhost:5000` -> `ws://localhost:5000/ws`).
+
 ## Deployment
 
 You can deploy the API and web apps to your preferred platform (e.g., a Node.js host or container platform). This repo no longer contains provider-specific deployment files; wire it up in your infra of choice.
