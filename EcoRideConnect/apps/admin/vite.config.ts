@@ -11,9 +11,10 @@ export default defineConfig({
       manifest: {
         name: 'WARGO Admin',
         short_name: 'WARGO Admin',
-        description: 'Admin console for WARGO',
-        theme_color: '#00A86B',
+        description: 'WARGO Platform Administration',
+        theme_color: '#1a365d',
         background_color: '#ffffff',
+        display: 'standalone',
         icons: [
           { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
