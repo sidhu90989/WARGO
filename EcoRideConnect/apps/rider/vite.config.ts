@@ -9,10 +9,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'WARGO',
+        name: 'WARGO RIDE',
         short_name: 'WARGO',
-        description: 'Reliable rides with WARGO',
-        theme_color: '#00A86B',
+        description: 'Book reliable rides with WARGO',
+        theme_color: '#000000',
         background_color: '#ffffff',
         icons: [
           { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
