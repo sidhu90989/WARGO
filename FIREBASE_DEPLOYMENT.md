@@ -12,10 +12,10 @@ This guide adapts the multi-site Firebase strategy to this repository's structur
 - Firebase CLI installed and logged in: `npm i -g firebase-tools` then `firebase login`
 - A Firebase project created (see `.firebaserc`)
 - Decide your custom domains (Hosted on Firebase Hosting, not App Hosting):
-  - Rider: `rider.your-domain.com`
-  - Driver: `driver.your-domain.com`
-  - Admin: `admin.your-domain.com`
-  - Backend: `api.your-domain.com` (your own Node host for `EcoRideConnect/server`)
+  - Rider: `wargo-ride.com`
+  - Driver: `wargo-partner.com`
+  - Admin: `wargo.com`
+  - Backend API: `api.wargo.com` (your own Node host for `EcoRideConnect/server`)
 
 ## Configure Firebase files
 - `firebase.json` and `.firebaserc` are in the repo root. Update `.firebaserc`:
@@ -23,7 +23,7 @@ This guide adapts the multi-site Firebase strategy to this repository's structur
   - Optionally rename site ids (`rider-wargo`, `driver-wargo`, `admin-wargo`) or create them with the same names
 
 ## Environment variables (production)
-Each app reads `VITE_API_URL` to call the backend and to derive the WebSocket URL (`/ws`).
+Each app reads `VITE_API_URL` to call the backend and to connect Socket.IO.
 
 Edit these files and set a real API URL:
 - `EcoRideConnect/apps/rider/.env.production`
@@ -32,12 +32,12 @@ Edit these files and set a real API URL:
 
 Example:
 ```
-VITE_API_URL=https://api.your-domain.com
+VITE_API_URL=https://api.wargo.com
 ```
 
 Server CORS: The API server allows multiple origins. Set one of the following in your server environment (where you run `node dist/index.js`):
 - `FRONTEND_ORIGIN` as a comma-separated list (recommended), e.g.
-  - `FRONTEND_ORIGIN="https://rider.your-domain.com,https://driver.your-domain.com,https://admin.your-domain.com"`
+  - `FRONTEND_ORIGIN="https://wargo-ride.com,https://wargo-partner.com,https://wargo.com"`
 - or per-site: `RIDER_ORIGIN`, `DRIVER_ORIGIN`, `ADMIN_ORIGIN`
 
 Local dev ports 5173/5174/5175 are allowed by default.
@@ -98,7 +98,7 @@ Example client usage (any app):
 ```ts
 import { io } from 'socket.io-client';
 
-const api = import.meta.env.VITE_API_URL; // e.g. https://api.your-domain.com
+const api = import.meta.env.VITE_API_URL; // e.g. https://api.wargo.com
 const socket = io(api, { withCredentials: true, path: '/socket.io' });
 
 socket.on('connect', () => console.log('connected'));

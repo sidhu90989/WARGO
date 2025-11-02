@@ -104,23 +104,23 @@ You can deploy the API and web apps to your preferred platform (e.g., a Node.js 
 
 ### Domains and CORS
 
-- Recommended layout:
-	- API/App Hosting: `https://wargo.com` (apex)
-	- Rider app (Hosting): `https://ride.wargo.com`
-	- Driver app (Hosting): `https://partner.wargo.com`
-	- Admin app (Hosting): `https://admin.wargo.com`
+- Your selected layout:
+	- Rider app (Hosting): `https://wargo-ride.com`
+	- Driver app (Hosting): `https://wargo-partner.com`
+	- Admin app (Hosting): `https://wargo.com`
+	- API (server you host): `https://api.wargo.com` (assumed; if different, adjust accordingly)
 
-Set CORS allowlist in server env:
+Set CORS allowlist in the API server env:
 
 ```
-FRONTEND_ORIGIN=https://ride.wargo.com,https://partner.wargo.com,https://admin.wargo.com
+FRONTEND_ORIGIN=https://wargo-ride.com,https://wargo-partner.com,https://wargo.com
 # or set individually
 RIDER_ORIGIN=https://ride.wargo.com
 DRIVER_ORIGIN=https://partner.wargo.com
 ADMIN_ORIGIN=https://admin.wargo.com
 ```
 
-In Firebase Auth > Settings > Authorized domains, add all the above domains plus the API domain.
+In Firebase Auth > Settings > Authorized domains, add all the above domains plus the API domain (e.g., `api.wargo.com`).
 
 ### Manual Deployment
 
