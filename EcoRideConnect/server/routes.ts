@@ -13,8 +13,10 @@ import nameApi from "./integrations/nameApi";
 
 // Flags
 const SIMPLE_AUTH = process.env.SIMPLE_AUTH === "true";
+const ALLOW_SIMPLE_AUTH_ANON = process.env.ALLOW_SIMPLE_AUTH_ANON === 'true';
 console.log("🔧 Environment check:", {
   SIMPLE_AUTH,
+  ALLOW_SIMPLE_AUTH_ANON,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? "SET" : "NOT SET",
   NODE_ENV: process.env.NODE_ENV
 });
@@ -65,7 +67,38 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
   }
 
   if (SIMPLE_AUTH) {
-    // If we expected simple auth but no session is present, reject.
+    if (ALLOW_SIMPLE_AUTH_ANON) {
+      req.firebaseUid = 'local-anon';
+      req.email = 'anon@local';
+      return next();
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.log('[auth] SIMPLE_AUTH verification', {
+        path: req.path,
+        emailHeader: req.header('x-simple-email'),
+        roleHeader: req.header('x-simple-role'),
+      });
+    }
+    // Allow a lightweight header-based bypass for local smoke tests
+    const emailHeader = req.header('x-simple-email');
+    const roleHeader = req.header('x-simple-role') || 'rider';
+    if (emailHeader) {
+      const firebaseUid = `local-${emailHeader}`;
+      req.firebaseUid = firebaseUid;
+      req.email = emailHeader;
+      // populate session for subsequent requests if cookies are working
+      if (req.session) {
+        req.session.user = {
+          firebaseUid,
+          email: emailHeader,
+          name: emailHeader.split('@')[0],
+          role: roleHeader,
+        };
+      }
+      return next();
+    }
+    // If we expected simple auth but no session/header is present, reject.
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -91,14 +124,28 @@ function registerSimpleAuth(app: Express) {
     if (!email || !name || !role) {
       return res.status(400).json({ error: 'email, name, and role are required' });
     }
-    // Stash user identity in session
-    req.session.user = {
-      firebaseUid: `local-${email}`,
-      email,
-      name,
-      role,
-    };
-    res.json({ success: true });
+    // Ensure a fresh session and explicitly persist so Set-Cookie is sent reliably in all environments
+    req.session.regenerate((err: any) => {
+      if (err) {
+        // eslint-disable-next-line no-console
+        console.error('[auth] session regenerate failed:', err);
+        return res.status(500).json({ error: 'Session error' });
+      }
+      req.session.user = {
+        firebaseUid: `local-${email}`,
+        email,
+        name,
+        role,
+      };
+      req.session.save((saveErr: any) => {
+        if (saveErr) {
+          // eslint-disable-next-line no-console
+          console.error('[auth] session save failed:', saveErr);
+          return res.status(500).json({ error: 'Session save error' });
+        }
+        res.json({ success: true });
+      });
+    });
   });
 
   app.post('/api/auth/logout', (req: any, res) => {
