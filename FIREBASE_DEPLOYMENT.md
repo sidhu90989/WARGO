@@ -84,12 +84,26 @@ If you previously set up Firebase App Hosting backends, disable them to avoid du
 - For apex domains, Hosting will provide A/AAAA records. For subdomains, it will provide CNAME.
 - Add records at your DNS provider and wait for verification/SSL.
 
-## Backend CORS and WebSocket
+## Backend CORS and realtime
 The server at `EcoRideConnect/server/index.ts` now:
 - Accepts CORS from configured origins (env-based)
-- Exposes WebSocket at `wss://api.your-domain.com/ws`
+- Hosts a Socket.IO server for realtime features
 
-No Socket.IO is used; clients use native WebSocket derived from `VITE_API_URL`.
+Realtime details:
+- Path: `/socket.io`
+- Origins allowed mirror the CORS allowlist (via `FRONTEND_ORIGIN` or per-site envs)
+- Clients use `socket.io-client` and derive the base from `VITE_API_URL`
+
+Example client usage (any app):
+```ts
+import { io } from 'socket.io-client';
+
+const api = import.meta.env.VITE_API_URL; // e.g. https://api.your-domain.com
+const socket = io(api, { withCredentials: true, path: '/socket.io' });
+
+socket.on('connect', () => console.log('connected'));
+socket.on('driver_location', (evt) => console.log('location', evt));
+```
 
 ## Admin security headers
 `firebase.json` sets strict headers on the Admin site:
