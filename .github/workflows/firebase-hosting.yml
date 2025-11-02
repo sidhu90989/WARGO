@@ -44,3 +44,14 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           firebase deploy --project trusty-diorama-475905-c3 --only hosting
+
+      - name: Post-deploy smoke checks
+        run: |
+          set -e
+          for url in \
+            https://wargo-ride.web.app \
+            https://wargo-partner.web.app \
+            https://wargo-admin.web.app; do
+            echo "Checking $url"
+            curl -sS -o /dev/null -w "%{http_code} %url_effective\n" --fail $url | tee /dev/stderr
+          done
