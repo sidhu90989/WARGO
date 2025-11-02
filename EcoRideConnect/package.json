@@ -32,7 +32,9 @@
     "deploy:admin": "npm run build:admin && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting:admin",
     "deploy:hosting": "npm run build:apps && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting",
     "deploy:all": "npm run build:apps && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy",
-    "build:all": "npm run build:apps"
+    "build:all": "npm run build:apps",
+    "smoke:simple": "tsx scripts/smoke-simple-auth.ts",
+    "smoke:db": "tsx scripts/smoke-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
