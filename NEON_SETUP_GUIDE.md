@@ -1,1 +1,0 @@
-This guide has been removed. Use a provider-agnostic PostgreSQL setup instead (e.g., Supabase, Railway, or a managed Postgres on your cloud).

@@ -69,7 +69,7 @@ npm run deploy:driver
 npm run deploy:admin
 ```
 
-Note: We don't deploy Cloud Functions in this repo. The API is an Express server you deploy to your own host (VPS, Render, Fly.io, Cloud Run, etc.). Point `VITE_API_URL` to that host.
+Note: We don't deploy Cloud Functions in this repo. The API is an Express server you deploy to your own hosting platform (e.g., your VPS or managed Node runtime). Point `VITE_API_URL` to that host.
 
 If you're using Firebase App Hosting's GitHub integration UI, fill in:
 - Live branch: `main`
