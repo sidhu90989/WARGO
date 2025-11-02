@@ -568,12 +568,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
+  // Build allowed origins similar to express CORS in index.ts
+  const ioOrigins = new Set<string>();
+  const addOrigin = (v?: string) => {
+    if (!v) return;
+    v
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => ioOrigins.add(s));
+  };
+  addOrigin(process.env.FRONTEND_ORIGIN);
+  addOrigin(process.env.RIDER_ORIGIN);
+  addOrigin(process.env.DRIVER_ORIGIN);
+  addOrigin(process.env.ADMIN_ORIGIN);
+  ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"].forEach((d) => ioOrigins.add(d));
+
   // Socket.IO server for real-time updates
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: true, // reflect request origin in dev
+      origin: Array.from(ioOrigins),
       credentials: true,
+      methods: ["GET", "POST"],
     },
+    transports: ["websocket", "polling"],
     path: "/socket.io",
   });
 

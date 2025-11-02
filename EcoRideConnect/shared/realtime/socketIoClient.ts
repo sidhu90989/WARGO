@@ -12,7 +12,11 @@ class SocketIoService {
 
   connect(userType: UserType) {
     this.userType = userType;
-    const base = (import.meta as any).env?.VITE_SOCKET_URL || (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000';
+    const base =
+      (import.meta as any).env?.VITE_SOCKET_URL ||
+      (import.meta as any).env?.VITE_API_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : '') ||
+      'http://localhost:5000';
 
     this.socket = io(String(base).replace(/\/$/, ''), {
       withCredentials: true,
