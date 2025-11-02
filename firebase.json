@@ -1,0 +1,46 @@
+{
+  "hosting": [
+    {
+      "target": "rider",
+      "public": "EcoRideConnect/dist/rider",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        { "source": "**", "destination": "/index.html" }
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css)",
+          "headers": [
+            { "key": "Cache-Control", "value": "max-age=31536000" }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "driver",
+      "public": "EcoRideConnect/dist/driver",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        { "source": "**", "destination": "/index.html" }
+      ]
+    },
+    {
+      "target": "admin",
+      "public": "EcoRideConnect/dist/admin",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        { "source": "**", "destination": "/index.html" }
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            { "key": "X-Frame-Options", "value": "DENY" },
+            { "key": "X-Content-Type-Options", "value": "nosniff" },
+            { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -15,7 +15,16 @@
     "admin:dev": "VITE_APP_NAME=WARGO VITE_API_URL=http://localhost:5000 VITE_SIMPLE_AUTH=false vite --config apps/admin/vite.config.ts",
     "rider:build": "VITE_APP_NAME=WARGO VITE_APP_SUBTITLE=RIDE vite build --config apps/rider/vite.config.ts",
     "driver:build": "VITE_APP_NAME='WARGO PARTNER' vite build --config apps/driver/vite.config.ts",
-    "admin:build": "VITE_APP_NAME=WARGO vite build --config apps/admin/vite.config.ts"
+    "admin:build": "VITE_APP_NAME=WARGO vite build --config apps/admin/vite.config.ts",
+    "build:rider": "npm run rider:build",
+    "build:driver": "npm run driver:build",
+    "build:admin": "npm run admin:build",
+    "build:apps": "npm run build:rider && npm run build:driver && npm run build:admin",
+    "deploy:rider": "npm run build:rider && firebase deploy --only hosting:rider",
+    "deploy:driver": "npm run build:driver && firebase deploy --only hosting:driver",
+    "deploy:admin": "npm run build:admin && firebase deploy --only hosting:admin",
+    "deploy:hosting": "npm run build:apps && firebase deploy --only hosting",
+    "deploy:all": "npm run build:apps && firebase deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -24,11 +24,29 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// CORS for separate frontend origin while sending cookies
-if (process.env.FRONTEND_ORIGIN) {
+// CORS for separate frontend origins while sending cookies
+// Prefer FRONTEND_ORIGIN as a comma-separated list; otherwise, default to common dev ports
+// and any explicit RIDER_ORIGIN/DRIVER_ORIGIN/ADMIN_ORIGIN values.
+{
+  const origins = new Set<string>();
+  const add = (v?: string) => {
+    if (!v) return;
+    v
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => origins.add(s));
+  };
+  add(process.env.FRONTEND_ORIGIN);
+  add(process.env.RIDER_ORIGIN);
+  add(process.env.DRIVER_ORIGIN);
+  add(process.env.ADMIN_ORIGIN);
+  // Local dev defaults
+  ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"].forEach((d) => origins.add(d));
+
   app.use(
     cors({
-      origin: process.env.FRONTEND_ORIGIN.split(',').map((s) => s.trim()),
+      origin: Array.from(origins),
       credentials: true,
     }),
   );
