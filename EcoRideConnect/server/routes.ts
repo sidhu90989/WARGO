@@ -66,28 +66,24 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
     return next();
   }
 
-  if (SIMPLE_AUTH) {
-    if (ALLOW_SIMPLE_AUTH_ANON) {
-      req.firebaseUid = 'local-anon';
-      req.email = 'anon@local';
-      return next();
-    }
+  // Header-based bypass for local testing when simple auth routes are allowed
+  if (process.env.ALLOW_SIMPLE_AUTH_ROUTES === 'true') {
     if (process.env.NODE_ENV !== 'production') {
       // eslint-disable-next-line no-console
-      console.log('[auth] SIMPLE_AUTH verification', {
+      console.log('[auth] header-bypass verification', {
         path: req.path,
         emailHeader: req.header('x-simple-email'),
         roleHeader: req.header('x-simple-role'),
+        rawEmail: (req.headers as any)['x-simple-email'],
+        rawHeadersKeys: Object.keys(req.headers || {}),
       });
     }
-    // Allow a lightweight header-based bypass for local smoke tests
     const emailHeader = req.header('x-simple-email');
     const roleHeader = req.header('x-simple-role') || 'rider';
     if (emailHeader) {
       const firebaseUid = `local-${emailHeader}`;
       req.firebaseUid = firebaseUid;
       req.email = emailHeader;
-      // populate session for subsequent requests if cookies are working
       if (req.session) {
         req.session.user = {
           firebaseUid,
@@ -96,6 +92,14 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
           role: roleHeader,
         };
       }
+      return next();
+    }
+  }
+
+  if (SIMPLE_AUTH) {
+    if (ALLOW_SIMPLE_AUTH_ANON) {
+      req.firebaseUid = 'local-anon';
+      req.email = 'anon@local';
       return next();
     }
     // If we expected simple auth but no session/header is present, reject.
