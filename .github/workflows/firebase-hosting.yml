@@ -29,6 +29,16 @@ jobs:
           npm ci
           npm run build:apps
 
+      - name: Ensure Hosting sites exist
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          set -e
+          echo "Ensuring Hosting sites exist (idempotent)"
+          firebase hosting:sites:create wargo-ride --project trusty-diorama-475905-c3 || echo "wargo-ride already exists"
+          firebase hosting:sites:create wargo-partner --project trusty-diorama-475905-c3 || echo "wargo-partner already exists"
+          firebase hosting:sites:create wargo-admin --project trusty-diorama-475905-c3 || echo "wargo-admin already exists"
+
       - name: Deploy Hosting (all sites)
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
