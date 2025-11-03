@@ -1,0 +1,11 @@
+.git
+node_modules
+EcoRideConnect/node_modules
+EcoRideConnect/dist
+**/.env
+**/.env.*
+*.log
+tmp
+coverage
+.vscode
+.idea
