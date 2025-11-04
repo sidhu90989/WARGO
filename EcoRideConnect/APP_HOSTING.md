@@ -24,7 +24,7 @@ SESSION_SECRET=replace-with-a-long-random-value
 
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require
 
-FRONTEND_ORIGIN=https://wargo-ride.com,https://wargo-partner.com,https://wargo.com
+FRONTEND_ORIGIN=https://rideapp.wargo.com,https://partner.wargo.com,https://wargo.com
 
 # Other keys as needed
 FIREBASE_API_KEY=...

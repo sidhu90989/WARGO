@@ -11,9 +11,9 @@ This guide is tailored to the current code in this repo (three Vite apps + Expre
 ## Production domains
 Recommended separation:
 - API: `https://api.wargo.com`
-- Rider: `https://wargo-ride.com`
-- Driver: `https://wargo-partner.com`
-- Admin: `https://admin.wargo.com`
+- Rider: `https://rideapp.wargo.com`
+- Driver: `https://partner.wargo.com`
+- Admin: `https://wargo.com`
 
 These match Firebase Hosting targets and the screenshot where custom domains are being prepared.
 
@@ -26,10 +26,10 @@ Socket.IO is initialized in `server/routes.ts` and now reads allowed origins fro
 
 Example `.env` additions (production):
 ```
-FRONTEND_ORIGIN="https://wargo-ride.com,https://wargo-partner.com,https://admin.wargo.com,https://api.wargo.com"
-RIDER_ORIGIN="https://wargo-ride.com"
-DRIVER_ORIGIN="https://wargo-partner.com"
-ADMIN_ORIGIN="https://admin.wargo.com"
+FRONTEND_ORIGIN="https://rideapp.wargo.com,https://partner.wargo.com,https://wargo.com,https://api.wargo.com"
+RIDER_ORIGIN="https://rideapp.wargo.com"
+DRIVER_ORIGIN="https://partner.wargo.com"
+ADMIN_ORIGIN="https://wargo.com"
 ```
 
 These are used by:

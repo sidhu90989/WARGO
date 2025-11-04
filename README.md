@@ -105,15 +105,15 @@ You can deploy the API and web apps to your preferred platform (e.g., a Node.js 
 ### Domains and CORS
 
 - Your selected layout:
-	- Rider app (Hosting): `https://wargo-ride.com`
-	- Driver app (Hosting): `https://wargo-partner.com`
+	- Rider app (Hosting): `https://rideapp.wargo.com`
+	- Driver app (Hosting): `https://partner.wargo.com`
 	- Admin app (Hosting): `https://wargo.com`
 	- API (server you host): `https://api.wargo.com` (assumed; if different, adjust accordingly)
 
 Set CORS allowlist in the API server env:
 
 ```
-FRONTEND_ORIGIN=https://wargo-ride.com,https://wargo-partner.com,https://wargo.com
+FRONTEND_ORIGIN=https://rideapp.wargo.com,https://partner.wargo.com,https://wargo.com
 # or set individually
 RIDER_ORIGIN=https://ride.wargo.com
 DRIVER_ORIGIN=https://partner.wargo.com

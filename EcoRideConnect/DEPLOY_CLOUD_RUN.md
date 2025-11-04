@@ -3,8 +3,8 @@
 This project deploys the three web apps to Firebase Hosting and the Express API to Cloud Run.
 
 Your production domains:
-- Rider: https://wargo-ride.com
-- Driver: https://wargo-partner.com
+- Rider: https://rideapp.wargo.com
+- Driver: https://partner.wargo.com
 - Admin: https://wargo.com
 - API: https://api.wargo.com (configure this custom domain for your Cloud Run service)
 
@@ -40,7 +40,7 @@ gcloud run deploy wargo-api \
   --set-env-vars "SIMPLE_AUTH=false" \
   --set-env-vars "ALLOW_SIMPLE_AUTH_ROUTES=false" \
   --set-env-vars "COOKIE_SECURE=true" \
-  --set-env-vars "FRONTEND_ORIGIN=https://wargo-ride.com,https://wargo-partner.com,https://wargo.com" \
+  --set-env-vars "FRONTEND_ORIGIN=https://rideapp.wargo.com,https://partner.wargo.com,https://wargo.com" \
   --set-env-vars "DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DBNAME" \
   --set-env-vars "SESSION_SECRET=GENERATE_A_LONG_RANDOM_SECRET"
 ```
@@ -49,7 +49,7 @@ Optional: run DB migrations once before traffic (recommended):
 
 ```bash
 gcloud run jobs create wargo-migrate --image gcr.io/YOUR_PROJECT_ID/wargo-api:latest --region REGION \
-  --set-env-vars "NODE_ENV=production,SIMPLE_AUTH=false,ALLOW_SIMPLE_AUTH_ROUTES=false,COOKIE_SECURE=true,FRONTEND_ORIGIN=https://wargo-ride.com,https://wargo-partner.com,https://wargo.com,DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DBNAME,SESSION_SECRET=..." \
+  --set-env-vars "NODE_ENV=production,SIMPLE_AUTH=false,ALLOW_SIMPLE_AUTH_ROUTES=false,COOKIE_SECURE=true,FRONTEND_ORIGIN=https://rideapp.wargo.com,https://partner.wargo.com,https://wargo.com,DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DBNAME,SESSION_SECRET=..." \
   --command npm --args "run,db:migrate"
 
 gcloud run jobs execute wargo-migrate --region REGION --wait
@@ -76,21 +76,21 @@ firebase --config ../firebase.json deploy --only hosting
 ```
 
 Then add custom domains in Firebase Console → Hosting:
-- rider site → `wargo-ride.com`
-- driver site → `wargo-partner.com`
+- rider site → `rideapp.wargo.com`
+- driver site → `partner.wargo.com`
 - admin site → `wargo.com`
 
 ## 5) Configure Firebase Auth
 
 Firebase Console → Authentication → Settings → Authorized domains:
-Add: `wargo-ride.com`, `wargo-partner.com`, `wargo.com`, and `api.wargo.com`.
+Add: `rideapp.wargo.com`, `partner.wargo.com`, `wargo.com`, and `api.wargo.com`.
 
 ## 6) Verify
 
 ```bash
 curl -I https://api.wargo.com/api/health
-curl -I https://wargo-ride.com
-curl -I https://wargo-partner.com
+curl -I https://rideapp.wargo.com
+curl -I https://partner.wargo.com
 curl -I https://wargo.com
 ```
 

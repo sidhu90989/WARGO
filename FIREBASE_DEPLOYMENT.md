@@ -12,8 +12,8 @@ This guide adapts the multi-site Firebase strategy to this repository's structur
 - Firebase CLI installed and logged in: `npm i -g firebase-tools` then `firebase login`
 - A Firebase project created (see `.firebaserc`)
 - Decide your custom domains (Hosted on Firebase Hosting, not App Hosting):
-  - Rider: `wargo-ride.com`
-  - Driver: `wargo-partner.com`
+  - Rider: `rideapp.wargo.com`
+  - Driver: `partner.wargo.com`
   - Admin: `wargo.com`
   - Backend API: `api.wargo.com` (your own Node host for `EcoRideConnect/server`)
 
@@ -37,7 +37,7 @@ VITE_API_URL=https://api.wargo.com
 
 Server CORS: The API server allows multiple origins. Set one of the following in your server environment (where you run `node dist/index.js`):
 - `FRONTEND_ORIGIN` as a comma-separated list (recommended), e.g.
-  - `FRONTEND_ORIGIN="https://wargo-ride.com,https://wargo-partner.com,https://wargo.com"`
+  - `FRONTEND_ORIGIN="https://rideapp.wargo.com,https://partner.wargo.com,https://wargo.com"`
 - or per-site: `RIDER_ORIGIN`, `DRIVER_ORIGIN`, `ADMIN_ORIGIN`
 
 Local dev ports 5173/5174/5175 are allowed by default.
