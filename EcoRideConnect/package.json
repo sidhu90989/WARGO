@@ -35,7 +35,8 @@
     "deploy:all": "npm run build:apps && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy",
     "build:all": "npm run build:apps",
     "smoke:simple": "tsx scripts/smoke-simple-auth.ts",
-    "smoke:db": "tsx scripts/smoke-db.ts"
+    "smoke:db": "tsx scripts/smoke-db.ts",
+    "smoke:db:token": "tsx scripts/smoke-db-token.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -1,0 +1,15 @@
+# Local secrets (do not commit)
+service-account.json
+.env.local
+
+# Node
+node_modules/
+
+# Build output
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
