@@ -23,10 +23,15 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  extraHeaders?: Record<string,string>,
 ): Promise<Response> {
+  const headers: Record<string,string> = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+    ...(extraHeaders || {}),
+  };
   const res = await fetch(withApiBase(url), {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });

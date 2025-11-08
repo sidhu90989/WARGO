@@ -24,10 +24,25 @@ console.log("🔧 Environment check:", {
 // Initialize Firebase Admin unless using SIMPLE_AUTH
 if (!SIMPLE_AUTH) {
   if (!admin.apps.length) {
-    // Prefer explicit service account if provided (local/prod friendly), else fallback to ADC
+    // Prefer explicit service account (path or inline JSON) else fallback to ADC
     const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
+    const keyJsonEnv = process.env.FIREBASE_SERVICE_ACCOUNT_JSON; // raw JSON or base64-encoded JSON
     try {
-      if (keyPath) {
+      if (keyJsonEnv && keyJsonEnv.trim().length > 0) {
+        let jsonStr = keyJsonEnv.trim();
+        // If looks like base64, try to decode; otherwise assume raw JSON
+        try {
+          if (!jsonStr.trim().startsWith('{')) {
+            jsonStr = Buffer.from(jsonStr, 'base64').toString('utf8');
+          }
+        } catch {
+          // ignore, will try to parse as-is
+        }
+        const json = JSON.parse(jsonStr);
+        admin.initializeApp({
+          credential: admin.credential.cert(json as any),
+        });
+      } else if (keyPath) {
         const resolved = path.isAbsolute(keyPath)
           ? keyPath
           : path.resolve(process.cwd(), keyPath);
@@ -90,6 +105,26 @@ async function verifyFirebaseToken(req: any, res: any, next: any) {
           email: emailHeader,
           name: emailHeader.split('@')[0],
           role: roleHeader,
+        };
+      }
+      return next();
+    }
+
+    // Dev convenience: if the client forgot to send headers, allow the
+    // complete-profile request to proceed using the posted name/role.
+    // This keeps local onboarding unblocked while we stabilize the clients.
+    if (req.path === '/api/auth/complete-profile' && req.body && req.body.name) {
+      const role = (req.body.role as string) || 'rider';
+      const email = `${String(req.body.name).toLowerCase().split(' ').join('.')}@example.com`;
+      const firebaseUid = `local-${email}`;
+      req.firebaseUid = firebaseUid;
+      req.email = email;
+      if (req.session) {
+        req.session.user = {
+          firebaseUid,
+          email,
+          name: req.body.name,
+          role,
         };
       }
       return next();

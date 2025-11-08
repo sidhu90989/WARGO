@@ -20,7 +20,9 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"rider" | "driver" | "admin">("rider");
+  const appRoleEnv = (import.meta.env.VITE_APP_ROLE as "rider" | "driver" | "admin" | undefined) || undefined;
+  const fixedRole = appRoleEnv && ["rider","driver","admin"].includes(appRoleEnv) ? (appRoleEnv as any) : undefined;
+  const [selectedRole, setSelectedRole] = useState<"rider" | "driver" | "admin">(fixedRole || "rider");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneMode, setPhoneMode] = useState(false);
@@ -102,25 +104,37 @@ export default function LoginPage() {
       const SIMPLE_AUTH = import.meta.env.VITE_SIMPLE_AUTH === 'true';
       let userData: any;
       if (SIMPLE_AUTH) {
-        // Call simple login to set session
-        await apiRequest('POST', '/api/auth/login', {
-          email: `${name.split(' ').join('.').toLowerCase()}@example.com`,
-          name,
-          role: selectedRole,
-        });
-        // Complete profile still needs to create a user row
-        const res = await apiRequest("POST", "/api/auth/complete-profile", {
-          name,
-          phone,
-          role: selectedRole,
-        });
+        // Prefer header-bypass in SIMPLE_AUTH/local to avoid 3rd-party cookie issues
+        const role = fixedRole || selectedRole;
+        const email = `${name.split(' ').join('.').toLowerCase()}@example.com`;
+        // Attempt to set a dev session (best-effort)
+        try {
+          await apiRequest('POST', '/api/auth/login', { email, name, role });
+        } catch {}
+        // Complete profile with header identity so it works even if cookies are blocked
+        const res = await apiRequest(
+          "POST",
+          "/api/auth/complete-profile",
+          { name, phone, role },
+          { 'x-simple-email': email, 'x-simple-role': role }
+        );
         userData = await res.json();
       } else {
-        const response = await apiRequest("POST", "/api/auth/complete-profile", {
-          name,
-          phone,
-          role: selectedRole,
-        });
+        // In DB mode (SIMPLE_AUTH=false) during local dev we still allow header-bypass
+        // when ALLOW_SIMPLE_AUTH_ROUTES=true on the server. Always send identity headers
+        // if an app role is fixed to avoid cross-site cookie hiccups.
+        const role = fixedRole || selectedRole;
+        const email = `${name.split(' ').join('.').toLowerCase()}@example.com`;
+        // Best-effort: try to establish a session, but don't fail hard if it doesn't stick
+        try {
+          await apiRequest('POST', '/api/auth/login', { email, name, role });
+        } catch {}
+        const response = await apiRequest(
+          "POST",
+          "/api/auth/complete-profile",
+          { name, phone, role },
+          fixedRole ? { 'x-simple-email': email, 'x-simple-role': role } : undefined
+        );
         userData = await response.json();
       }
       setUser(userData);
@@ -130,9 +144,10 @@ export default function LoginPage() {
         description: "Your account has been created successfully.",
       });
 
-      if (selectedRole === "admin") {
+      const finalRole = fixedRole || selectedRole;
+      if (finalRole === "admin") {
         setLocation("/admin");
-      } else if (selectedRole === "driver") {
+      } else if (finalRole === "driver") {
         setLocation("/driver");
       } else {
         setLocation("/rider");
@@ -254,29 +269,31 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>I am a</Label>
-                  <RadioGroup value={selectedRole} onValueChange={(value) => setSelectedRole(value as any)}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="rider" id="rider" data-testid="radio-rider" />
-                      <Label htmlFor="rider" className="font-normal cursor-pointer">
-                        Rider - Book eco-friendly rides
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="driver" id="driver" data-testid="radio-driver" />
-                      <Label htmlFor="driver" className="font-normal cursor-pointer">
-                        Driver - Provide green transportation
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="admin" id="admin" data-testid="radio-admin" />
-                      <Label htmlFor="admin" className="font-normal cursor-pointer">
-                        Admin - Manage the platform
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                {!fixedRole && (
+                  <div className="space-y-2">
+                    <Label>I am a</Label>
+                    <RadioGroup value={selectedRole} onValueChange={(value) => setSelectedRole(value as any)}>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="rider" id="rider" data-testid="radio-rider" />
+                        <Label htmlFor="rider" className="font-normal cursor-pointer">
+                          Rider - Book eco-friendly rides
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="driver" id="driver" data-testid="radio-driver" />
+                        <Label htmlFor="driver" className="font-normal cursor-pointer">
+                          Driver - Provide green transportation
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="admin" id="admin" data-testid="radio-admin" />
+                        <Label htmlFor="admin" className="font-normal cursor-pointer">
+                          Admin - Manage the platform
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
               </div>
 
               <Button
