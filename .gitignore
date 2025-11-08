@@ -25,12 +25,14 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+*.log
 
 # Runtime data
 pids
 *.pid
 *.seed
 *.pid.lock
+*.pid
 
 # Coverage directory used by tools like istanbul
 coverage/
