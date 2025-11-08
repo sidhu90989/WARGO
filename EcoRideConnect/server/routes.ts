@@ -258,11 +258,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If driver, create driver profile
       if (role === 'driver') {
+        // Ensure vehicleNumber is unique to avoid conflicts with the unique constraint
+        const uniqueSuffix = (user.id || '').slice(0, 8) || Math.random().toString(36).slice(2, 10);
         await storage.createDriverProfile({
           userId: user.id,
           vehicleType: 'e_rickshaw',
-          vehicleNumber: 'PENDING',
-          licenseNumber: 'PENDING',
+          vehicleNumber: `PENDING-${uniqueSuffix}`,
+          licenseNumber: `PENDING-${uniqueSuffix}`,
           kycStatus: 'pending',
           rating: '5.00',
           totalRides: 0,
