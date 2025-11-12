@@ -39,67 +39,52 @@ export default function LoginPage() {
       } else {
         await signInWithGoogle();
         // Wait a moment for Firebase auth state to settle
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // After Firebase sign-in, check if user already exists in backend
         const currentUser = firebaseAuth?.currentUser;
         if (currentUser) {
-          try {
-            const idToken = await currentUser.getIdToken();
-            const verifyRes = await apiRequest('POST', '/api/auth/verify', undefined, {
-              'Authorization': `Bearer ${idToken}`
-            });
-            const existingUser = await verifyRes.json();
-            if (existingUser && existingUser.id) {
-              // User exists, redirect to their dashboard
-              setUser(existingUser);
-              const role = existingUser.role || fixedRole || 'rider';
-              if (role === 'admin') setLocation('/admin');
-              else if (role === 'driver') setLocation('/driver');
-              else setLocation('/rider');
-              return;
-            }
-          } catch (e) {
-            console.log('User not found, will auto-create');
-          }
-        }
-        
-        // New user: auto-create with Firebase info
-        if (currentUser) {
           const autoName = currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
+          const autoEmail = currentUser.email || `${autoName.toLowerCase()}@example.com`;
           const autoPhone = currentUser.phoneNumber || '+911234567890';
           const role = fixedRole || 'rider';
           
           try {
-            // Get Firebase ID token to authenticate the request
-            const idToken = await currentUser.getIdToken();
-            
+            // Use simple auth headers for hybrid mode (when Firebase Admin SDK is not available)
             const response = await apiRequest('POST', '/api/auth/complete-profile', {
               name: autoName,
               phone: autoPhone,
               role: role
             }, {
-              'Authorization': `Bearer ${idToken}`
+              'x-simple-email': autoEmail,
+              'x-simple-role': role
             });
             const userData = await response.json();
             setUser(userData);
             
             toast({
               title: `Welcome to ${appName()}!`,
-              description: "Your account has been created successfully.",
+              description: "You're now signed in.",
             });
             
             if (role === 'admin') setLocation('/admin');
             else if (role === 'driver') setLocation('/driver');
             else setLocation('/rider');
             return;
-          } catch (createError) {
+          } catch (createError: any) {
             console.error('Auto-create failed:', createError);
-            // Fallback: show profile form
-            setShowRoleSelection(true);
+            toast({
+              title: "Sign In Failed",
+              description: createError?.message || "Failed to create your account. Please try again.",
+              variant: "destructive",
+            });
           }
         } else {
-          setShowRoleSelection(true);
+          toast({
+            title: "Sign In Failed",
+            description: "Could not get your account information from Google.",
+            variant: "destructive",
+          });
         }
       }
     } catch (error: any) {
