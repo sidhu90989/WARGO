@@ -42,34 +42,44 @@ export default function LoginPage() {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // After Firebase sign-in, check if user already exists in backend
-        try {
-          const verifyRes = await apiRequest('POST', '/api/auth/verify');
-          const existingUser = await verifyRes.json();
-          if (existingUser && existingUser.id) {
-            // User exists, redirect to their dashboard
-            setUser(existingUser);
-            const role = existingUser.role || fixedRole || 'rider';
-            if (role === 'admin') setLocation('/admin');
-            else if (role === 'driver') setLocation('/driver');
-            else setLocation('/rider');
-            return;
+        const currentUser = firebaseAuth?.currentUser;
+        if (currentUser) {
+          try {
+            const idToken = await currentUser.getIdToken();
+            const verifyRes = await apiRequest('POST', '/api/auth/verify', undefined, {
+              'Authorization': `Bearer ${idToken}`
+            });
+            const existingUser = await verifyRes.json();
+            if (existingUser && existingUser.id) {
+              // User exists, redirect to their dashboard
+              setUser(existingUser);
+              const role = existingUser.role || fixedRole || 'rider';
+              if (role === 'admin') setLocation('/admin');
+              else if (role === 'driver') setLocation('/driver');
+              else setLocation('/rider');
+              return;
+            }
+          } catch (e) {
+            console.log('User not found, will auto-create');
           }
-        } catch (e) {
-          console.log('User not found, will auto-create');
         }
         
         // New user: auto-create with Firebase info
-        const currentUser = firebaseAuth?.currentUser;
         if (currentUser) {
           const autoName = currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
           const autoPhone = currentUser.phoneNumber || '+911234567890';
           const role = fixedRole || 'rider';
           
           try {
+            // Get Firebase ID token to authenticate the request
+            const idToken = await currentUser.getIdToken();
+            
             const response = await apiRequest('POST', '/api/auth/complete-profile', {
               name: autoName,
               phone: autoPhone,
               role: role
+            }, {
+              'Authorization': `Bearer ${idToken}`
             });
             const userData = await response.json();
             setUser(userData);
