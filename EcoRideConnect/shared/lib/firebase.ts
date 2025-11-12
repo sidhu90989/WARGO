@@ -6,6 +6,7 @@ import { getAuth } from 'firebase/auth';
 const firebaseConfig = {
   apiKey: "AIzaSyAyoxCh_tJzFHwMNSX1Zs6Ez1EmYMxxUPg",
   authDomain: "trusty-diorama-475905-c3.firebaseapp.com",
+  databaseURL: "https://trusty-diorama-475905-c3-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "trusty-diorama-475905-c3",
   storageBucket: "trusty-diorama-475905-c3.firebasestorage.app",
   messagingSenderId: "805719737795",
