@@ -1,4 +1,4 @@
-// Central Firebase configuration for all apps
+// Central Firebase configuration for all apps (modular SDK v9+)
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -12,6 +12,17 @@ const firebaseConfig = {
   appId: "1:805719737795:web:fdf6eb93864fcde7b8a976",
   measurementId: "G-2BZXC1LWPM"
 };
-export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+
+let app: any;
+let db: any;
+let auth: any;
+
+try {
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+} catch (error) {
+  console.error('[Firebase] Initialization failed. Ensure Firebase APIs are enabled in Google Cloud Console.', error);
+}
+
+export { app, db, auth };

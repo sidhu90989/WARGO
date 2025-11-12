@@ -95,11 +95,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (!auth || !googleProvider) {
-        throw new Error("Firebase auth not initialized");
+        throw new Error("Firebase auth not initialized. Check that VITE_FIREBASE_API_KEY is set.");
       }
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+      // After popup success, onAuthStateChanged will trigger and verify user existence
+    } catch (error: any) {
       console.error("Error signing in with Google:", error);
+      // Provide actionable error messages
+      if (error?.code === 'auth/network-request-failed') {
+        throw new Error("Network error. Check your internet connection and Firebase API status.");
+      } else if (error?.code === 'auth/invalid-api-key') {
+        throw new Error("Invalid Firebase API key. Verify VITE_FIREBASE_API_KEY in .env");
+      } else if (error?.code === 'auth/unauthorized-domain') {
+        throw new Error("Domain not authorized. Add this domain in Firebase Console → Authentication → Authorized Domains.");
+      }
       throw error;
     }
   };

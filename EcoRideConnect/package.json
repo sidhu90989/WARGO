@@ -36,7 +36,9 @@
     "build:all": "npm run build:apps",
     "smoke:simple": "tsx scripts/smoke-simple-auth.ts",
     "smoke:db": "tsx scripts/smoke-db.ts",
-    "smoke:db:token": "tsx scripts/smoke-db-token.ts"
+    "smoke:db:token": "tsx scripts/smoke-db-token.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -137,6 +139,7 @@
     "tsx": "^4.20.5",
     "typescript": "5.6.3",
     "vite": "^5.4.20",
+    "vitest": "^1.6.0",
     "concurrently": "^8.2.2",
     "vite-plugin-pwa": "^0.17.5",
     "@types/cors": "^2.8.17"

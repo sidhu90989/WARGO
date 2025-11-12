@@ -6,6 +6,7 @@ import cors from "cors";
 import session from "express-session";
 import MemoryStoreFactory from "memorystore";
 import { registerRoutes } from "./routes";
+import "./env"; // validate env at startup
 
 const app = express();
 

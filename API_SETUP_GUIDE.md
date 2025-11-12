@@ -21,9 +21,18 @@
 ### Step 3: Firebase Authentication (CRITICAL)
 1. Go to [Firebase Console](https://console.firebase.google.com)
 2. Create a new project
-3. Enable Authentication > Sign-in method > Email/Password
-4. Get configuration from Project Settings
-5. Add to .env:
+3. Enable Authentication > Sign-in method > Google (and optionally Phone)
+4. Add authorized domains:
+   - Go to Authentication → Settings → Authorized Domains
+   - Add: `localhost`, your dev domain, and production domains (see `FIREBASE_AUTH_DOMAINS.md`)
+5. Enable required APIs in [Google Cloud Console](https://console.cloud.google.com):
+   ```bash
+   gcloud services enable firebase.googleapis.com
+   gcloud services enable identitytoolkit.googleapis.com
+   gcloud services enable firebaseauth.googleapis.com
+   ```
+6. Get configuration from Project Settings → General
+7. Add to .env:
    ```
    VITE_FIREBASE_API_KEY="your-api-key"
    VITE_FIREBASE_PROJECT_ID="your-project-id"

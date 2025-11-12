@@ -38,12 +38,31 @@ export default function LoginPage() {
         setShowRoleSelection(true);
       } else {
         await signInWithGoogle();
+        // After Firebase sign-in, check if user already exists in backend
+        try {
+          const verifyRes = await apiRequest('POST', '/api/auth/verify');
+          const existingUser = await verifyRes.json();
+          if (existingUser && existingUser.id) {
+            // User exists, redirect to their dashboard
+            setUser(existingUser);
+            const role = existingUser.role || 'rider';
+            if (role === 'admin') setLocation('/admin');
+            else if (role === 'driver') setLocation('/driver');
+            else setLocation('/rider');
+            return;
+          }
+        } catch (e) {
+          // User doesn't exist or verify failed; proceed to profile form
+          console.log('User not found, showing profile form');
+        }
+        // New user: show profile completion form
         setShowRoleSelection(true);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const message = error?.message || "Could not sign in with Google. Please try again.";
       toast({
         title: "Sign In Failed",
-        description: "Could not sign in with Google. Please try again.",
+        description: message,
         variant: "destructive",
       });
     } finally {

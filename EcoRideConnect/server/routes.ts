@@ -382,11 +382,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         femalePrefRequested,
       } = req.body;
 
-      // Calculate estimated fare and distance
-      const distance = 5.5; // Mock distance in km
-      const estimatedFare = vehicleType === 'e_scooter' ? 30 : vehicleType === 'e_rickshaw' ? 45 : 80;
-      const co2Saved = distance * 0.12; // Mock CO2 calculation
-      const ecoPoints = Math.floor(distance * 10);
+      // Calculate estimated fare, distance and eco impact
+      const { estimateRide } = await import("@shared/services/ridePricingService");
+      const est = estimateRide({
+        pickup: { lat: Number(pickupLat), lng: Number(pickupLng) },
+        drop: { lat: Number(dropoffLat), lng: Number(dropoffLng) },
+        vehicleType,
+        femalePrefRequested: !!femalePrefRequested,
+      });
 
       const ride = await storage.createRide({
         riderId: user.id,
@@ -399,10 +402,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vehicleType,
         femalePrefRequested,
         status: 'pending',
-        distance: distance.toString(),
-        estimatedFare: estimatedFare.toString(),
-        co2Saved: co2Saved.toString(),
-        ecoPointsEarned: ecoPoints,
+        distance: est.distanceKm.toFixed(2),
+        estimatedFare: est.estimatedFare.toFixed(2),
+        co2Saved: est.co2SavedKg.toFixed(2),
+        ecoPointsEarned: est.ecoPoints,
       });
 
       res.json(ride);
@@ -482,10 +485,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update rider eco points and CO2
       const rider = await storage.getUser(ride.riderId);
       if (rider) {
-        await storage.updateUser(ride.riderId, {
-          ecoPoints: rider.ecoPoints + (ride.ecoPointsEarned || 0),
-          totalCO2Saved: (Number(rider.totalCO2Saved) + Number(ride.co2Saved || 0)).toString(),
+        const newEcoPoints = rider.ecoPoints + (ride.ecoPointsEarned || 0);
+        const newCO2 = (Number(rider.totalCO2Saved) + Number(ride.co2Saved || 0)).toString();
+        const updatedRider = await storage.updateUser(ride.riderId, {
+          ecoPoints: newEcoPoints,
+          totalCO2Saved: newCO2,
         });
+
+        // Badge awarding: grant any badges with requiredPoints <= newEcoPoints that are not yet earned
+        try {
+          const [allBadges, userBadges] = await Promise.all([
+            storage.getAllBadges(),
+            storage.getUserBadges(updatedRider.id),
+          ]);
+          const earned = new Set(userBadges.map((b) => b.badgeId));
+          const toAward = allBadges.filter((b) => (b.requiredPoints ?? 0) <= newEcoPoints && !earned.has(b.id));
+          await Promise.all(
+            toAward.map((b) => storage.awardBadge({ userId: updatedRider.id, badgeId: b.id }))
+          );
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn('[badges] awarding failed:', e);
+        }
       }
 
       // Update driver stats
