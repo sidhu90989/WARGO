@@ -38,6 +38,9 @@ export default function LoginPage() {
         setShowRoleSelection(true);
       } else {
         await signInWithGoogle();
+        // Wait a moment for Firebase auth state to settle
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // After Firebase sign-in, check if user already exists in backend
         try {
           const verifyRes = await apiRequest('POST', '/api/auth/verify');
@@ -45,18 +48,49 @@ export default function LoginPage() {
           if (existingUser && existingUser.id) {
             // User exists, redirect to their dashboard
             setUser(existingUser);
-            const role = existingUser.role || 'rider';
+            const role = existingUser.role || fixedRole || 'rider';
             if (role === 'admin') setLocation('/admin');
             else if (role === 'driver') setLocation('/driver');
             else setLocation('/rider');
             return;
           }
         } catch (e) {
-          // User doesn't exist or verify failed; proceed to profile form
-          console.log('User not found, showing profile form');
+          console.log('User not found, will auto-create');
         }
-        // New user: show profile completion form
-        setShowRoleSelection(true);
+        
+        // New user: auto-create with Firebase info
+        const currentUser = firebaseAuth?.currentUser;
+        if (currentUser) {
+          const autoName = currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
+          const autoPhone = currentUser.phoneNumber || '+911234567890';
+          const role = fixedRole || 'rider';
+          
+          try {
+            const response = await apiRequest('POST', '/api/auth/complete-profile', {
+              name: autoName,
+              phone: autoPhone,
+              role: role
+            });
+            const userData = await response.json();
+            setUser(userData);
+            
+            toast({
+              title: `Welcome to ${appName()}!`,
+              description: "Your account has been created successfully.",
+            });
+            
+            if (role === 'admin') setLocation('/admin');
+            else if (role === 'driver') setLocation('/driver');
+            else setLocation('/rider');
+            return;
+          } catch (createError) {
+            console.error('Auto-create failed:', createError);
+            // Fallback: show profile form
+            setShowRoleSelection(true);
+          }
+        } else {
+          setShowRoleSelection(true);
+        }
       }
     } catch (error: any) {
       const message = error?.message || "Could not sign in with Google. Please try again.";

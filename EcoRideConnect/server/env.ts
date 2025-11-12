@@ -11,7 +11,7 @@ const requirements: EnvRequirement[] = [
   { key: 'SIMPLE_AUTH', requiredWhen: () => true, description: 'Simple auth mode toggle' },
   { key: 'DATABASE_URL', requiredWhen: (e) => e.SIMPLE_AUTH !== 'true', description: 'Postgres connection string', redact: true },
   { key: 'STRIPE_SECRET_KEY', requiredWhen: (e) => e.SIMPLE_AUTH !== 'true', description: 'Stripe API secret', redact: true },
-  { key: 'FIREBASE_SERVICE_ACCOUNT_KEY_PATH', requiredWhen: (e) => e.SIMPLE_AUTH !== 'true' && !e.FIREBASE_SERVICE_ACCOUNT_JSON, description: 'Path to Firebase service account (or provide FIREBASE_SERVICE_ACCOUNT_JSON)', redact: false },
+  { key: 'FIREBASE_SERVICE_ACCOUNT_KEY_PATH', requiredWhen: (e) => e.SIMPLE_AUTH !== 'true' && e.ALLOW_SIMPLE_AUTH_ROUTES !== 'true' && !e.FIREBASE_SERVICE_ACCOUNT_JSON, description: 'Path to Firebase service account (or provide FIREBASE_SERVICE_ACCOUNT_JSON)', redact: false },
 ];
 
 export interface EnvReport {
