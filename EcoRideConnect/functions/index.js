@@ -40,5 +40,7 @@ if (!process.env.SESSION_SECRET && functions.config().app) {
   process.env.COOKIE_SECURE = 'true';
 }
 
-// Export as Firebase Function
-exports.api = functions.https.onRequest(app);
+// Export as Firebase Function (publicly accessible)
+exports.api = functions.https.onRequest({
+  invoker: 'public'
+}, app);
