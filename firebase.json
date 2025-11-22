@@ -1,5 +1,25 @@
 {
+  "functions": {
+    "source": "EcoRideConnect/functions",
+    "runtime": "nodejs20",
+    "predeploy": "cd EcoRideConnect && npm run build"
+  },
   "hosting": [
+    {
+      "target": "api",
+      "public": "EcoRideConnect/dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "function": "api"
+        },
+        {
+          "source": "/socket.io/**",
+          "function": "api"
+        }
+      ]
+    },
     {
       "target": "rider",
       "public": "EcoRideConnect/dist/rider",

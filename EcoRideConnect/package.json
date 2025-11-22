@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "esbuild server/index.ts --platform=node --packages=external --bundle --format=cjs --outdir=dist",
+    "build:functions": "cd functions && npm install",
     "start": "NODE_ENV=production node dist/index.js",
     "start:migrate": "npm run db:migrate && NODE_ENV=production node dist/index.js",
     "start:prod": "npm run db:migrate && NODE_ENV=production node dist/index.js",
@@ -33,6 +34,8 @@
     "deploy:admin": "npm run build:admin && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting:admin",
     "deploy:hosting": "npm run build:apps && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy --only hosting",
     "deploy:all": "npm run build:apps && firebase --config ../firebase.json --project trusty-diorama-475905-c3 deploy",
+    "deploy:one": "bash scripts/deploy-one.sh",
+    "deploy": "bash scripts/deploy-quick.sh",
     "build:all": "npm run build:apps",
     "smoke:simple": "tsx scripts/smoke-simple-auth.ts",
     "smoke:db": "tsx scripts/smoke-db.ts",

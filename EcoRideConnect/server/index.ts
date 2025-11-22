@@ -148,6 +148,15 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // Export app for Firebase Functions
+  if (process.env.FIREBASE_FUNCTIONS) {
+    log('Exporting app for Firebase Functions');
+    module.exports = app;
+    module.exports.default = app;
+    module.exports.app = app;
+    return;
+  }
+
   // Frontend is now served by per-app dev servers / static hosts.
   // The API server no longer serves the client assets.
 

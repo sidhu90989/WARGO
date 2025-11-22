@@ -5,10 +5,20 @@
   "targets": {
     "trusty-diorama-475905-c3": {
       "hosting": {
-        "rider": ["wargo-ride"],
-        "driver": ["wargo-partner"],
-        "admin": ["wargo-admin"]
+        "rider": [
+          "wargo-ride"
+        ],
+        "driver": [
+          "wargo-partner"
+        ],
+        "admin": [
+          "wargo-admin"
+        ],
+        "api": [
+          "trusty-diorama-475905-c3"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }

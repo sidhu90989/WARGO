@@ -7,6 +7,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import { z } from "zod";
 import Stripe from "stripe";
+import { trackLiveRide, setRideStatus, clearRideTracking } from "./integrations/firebaseRealtimeDb";
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
@@ -48,11 +49,19 @@ if (!SIMPLE_AUTH) {
           ? keyPath
           : path.resolve(process.cwd(), keyPath);
         const json = JSON.parse(fs.readFileSync(resolved, "utf8"));
-        admin.initializeApp({
+        const initConfig: any = {
           credential: admin.credential.cert(json as any),
-        });
+        };
+        if (process.env.FIREBASE_DATABASE_URL) {
+          initConfig.databaseURL = process.env.FIREBASE_DATABASE_URL;
+        }
+        admin.initializeApp(initConfig);
       } else {
-        admin.initializeApp();
+        const initConfig: any = {};
+        if (process.env.FIREBASE_DATABASE_URL) {
+          initConfig.databaseURL = process.env.FIREBASE_DATABASE_URL;
+        }
+        admin.initializeApp(initConfig);
       }
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -508,6 +517,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         completedAt: new Date(),
       });
 
+      // Clear real-time tracking from Firebase (ride complete)
+      await clearRideTracking(req.params.id).catch(err => 
+        console.error('Firebase cleanup error:', err)
+      );
+
       // Update rider eco points and CO2
       const rider = await storage.getUser(ride.riderId);
       if (rider) {
@@ -584,6 +598,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For now, just respond OK and mark a timestamp note if desired.
       await storage.updateRide(req.params.id, { } as any);
       res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Real-time location tracking endpoint (driver/rider)
+  const locationUpdateSchema = z.object({
+    lat: z.coerce.number(),
+    lng: z.coerce.number(),
+    heading: z.coerce.number().optional(),
+    speed: z.coerce.number().optional(),
+  });
+  app.post("/api/rides/:id/location", verifyFirebaseToken, validateParams(idParamSchema), validateBody(locationUpdateSchema), async (req: any, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const ride = await storage.getRide(req.params.id);
+      if (!ride) return res.status(404).json({ error: 'Ride not found' });
+
+      // Verify user is part of this ride
+      if (ride.riderId !== user.id && ride.driverId !== user.id) {
+        return res.status(403).json({ error: 'Not authorized for this ride' });
+      }
+
+      const { lat, lng, heading, speed } = req.body;
+      const who = user.id === ride.driverId ? 'driver' : 'rider';
+
+      // Persist to Firebase Realtime DB
+      await trackLiveRide(req.params.id, lat, lng, who, { heading, speed });
+
+      res.json({ success: true, timestamp: Date.now() });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get current ride tracking data from Firebase Realtime DB
+  app.get("/api/rides/:id/location", verifyFirebaseToken, validateParams(idParamSchema), async (req: any, res) => {
+    try {
+      const user = await storage.getUserByFirebaseUid(req.firebaseUid);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const ride = await storage.getRide(req.params.id);
+      if (!ride) return res.status(404).json({ error: 'Ride not found' });
+
+      // Verify user is part of this ride
+      if (ride.riderId !== user.id && ride.driverId !== user.id) {
+        return res.status(403).json({ error: 'Not authorized for this ride' });
+      }
+
+      // Read from Firebase Realtime DB
+      const db = admin.database();
+      const snapshot = await db.ref(`active_rides/${req.params.id}`).once('value');
+      const tracking = snapshot.val();
+
+      if (!tracking) {
+        return res.json({ rideId: req.params.id, locations: {} });
+      }
+
+      res.json(tracking);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -701,6 +776,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // For Firebase Functions, we don't create HTTP server or Socket.IO here
+  // Socket.IO requires ws transport which isn't supported in Cloud Functions
+  // Return the Express app directly for Firebase Functions compatibility
+  if (process.env.FIREBASE_FUNCTIONS) {
+    console.log('[routes] Running in Firebase Functions mode - Socket.IO disabled');
+    return app as any;
+  }
+
   const httpServer = createServer(app);
 
   // Build allowed origins similar to express CORS in index.ts
@@ -738,24 +821,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Receive location updates from drivers/riders and broadcast
-    socket.on('location_update', (data: any) => {
+    socket.on('location_update', async (data: any) => {
       try {
         const payload = {
           rideId: data?.rideId,
           lat: Number(data?.lat),
           lng: Number(data?.lng),
           who: data?.who || 'unknown',
+          heading: data?.heading,
+          speed: data?.speed,
           at: Date.now(),
         };
+        // Broadcast via Socket.IO
         io.emit('driver_location', payload);
+        
+        // Also persist to Firebase Realtime DB for redundancy and historical tracking
+        if (payload.rideId && !isNaN(payload.lat) && !isNaN(payload.lng)) {
+          await trackLiveRide(
+            payload.rideId,
+            payload.lat,
+            payload.lng,
+            payload.who,
+            { heading: payload.heading, speed: payload.speed }
+          ).catch(err => console.error('Firebase tracking error:', err));
+        }
       } catch (e) {
         console.error('socket.on(location_update) error:', e);
       }
     });
 
-    // Placeholder: relay ride status updates if needed later
-    socket.on('ride_status_update', (data: any) => {
-      io.emit('ride_status_update', { ...data, at: Date.now() });
+    // Relay ride status updates and sync to Firebase Realtime DB
+    socket.on('ride_status_update', async (data: any) => {
+      const payload = { ...data, at: Date.now() };
+      io.emit('ride_status_update', payload);
+      
+      // Sync status to Firebase Realtime DB
+      if (data?.rideId && data?.status) {
+        await setRideStatus(data.rideId, data.status).catch(err => 
+          console.error('Firebase status sync error:', err)
+        );
+      }
     });
 
     // Placeholder: new ride request broadcast
