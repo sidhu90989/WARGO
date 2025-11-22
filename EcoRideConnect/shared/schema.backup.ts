@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, decimal, boolean, pgEnum, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, decimal, boolean, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -13,7 +13,7 @@ export const paymentMethodEnum = pgEnum("payment_method", ["cash", "card", "upi"
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "completed", "failed", "refunded"]);
 export const kycStatusEnum = pgEnum("kyc_status", ["pending", "verified", "rejected"]);
 
-// Users table - normalized with proper constraints
+// Users table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   firebaseUid: text("firebase_uid").unique(),
@@ -26,22 +26,16 @@ export const users = pgTable("users", {
   ecoPoints: integer("eco_points").notNull().default(0),
   totalCO2Saved: decimal("total_co2_saved", { precision: 10, scale: 2 }).notNull().default("0"),
   referralCode: text("referral_code").unique(),
-  referredBy: varchar("referred_by").references((): any => users.id, { onDelete: 'set null' }),
+  referredBy: varchar("referred_by"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (table) => ({
-  roleIdx: index("users_role_idx").on(table.role),
-  isActiveIdx: index("users_is_active_idx").on(table.isActive),
-  phoneIdx: index("users_phone_idx").on(table.phone),
-  firebaseUidIdx: uniqueIndex("users_firebase_uid_idx").on(table.firebaseUid),
-  emailIdx: index("users_email_idx").on(table.email),
-}));
+});
 
-// Driver profiles table - one-to-one with users
+// Driver profiles table
 export const driverProfiles = pgTable("driver_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id),
   vehicleType: vehicleTypeEnum("vehicle_type").notNull(),
   vehicleNumber: text("vehicle_number").notNull().unique(),
   vehicleModel: text("vehicle_model"),
@@ -55,19 +49,13 @@ export const driverProfiles = pgTable("driver_profiles", {
   femalePrefEnabled: boolean("female_pref_enabled").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: uniqueIndex("driver_profiles_user_id_idx").on(table.userId),
-  isAvailableIdx: index("driver_profiles_is_available_idx").on(table.isAvailable),
-  kycStatusIdx: index("driver_profiles_kyc_status_idx").on(table.kycStatus),
-  vehicleTypeIdx: index("driver_profiles_vehicle_type_idx").on(table.vehicleType),
-  availableKycIdx: index("driver_profiles_available_kyc_idx").on(table.isAvailable, table.kycStatus),
-}));
+});
 
-// Rides table - many-to-one with users (rider and driver)
+// Rides table
 export const rides = pgTable("rides", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  riderId: varchar("rider_id").notNull().references(() => users.id, { onDelete: 'restrict' }),
-  driverId: varchar("driver_id").references(() => users.id, { onDelete: 'set null' }),
+  riderId: varchar("rider_id").notNull().references(() => users.id),
+  driverId: varchar("driver_id").references(() => users.id),
   pickupLocation: text("pickup_location").notNull(),
   pickupLat: decimal("pickup_lat", { precision: 10, scale: 7 }).notNull(),
   pickupLng: decimal("pickup_lng", { precision: 10, scale: 7 }).notNull(),
@@ -89,84 +77,58 @@ export const rides = pgTable("rides", {
   cancelledAt: timestamp("cancelled_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (table) => ({
-  riderIdIdx: index("rides_rider_id_idx").on(table.riderId),
-  driverIdIdx: index("rides_driver_id_idx").on(table.driverId),
-  statusIdx: index("rides_status_idx").on(table.status),
-  createdAtIdx: index("rides_created_at_idx").on(table.createdAt),
-  statusDriverIdx: index("rides_status_driver_idx").on(table.status, table.driverId),
-  pickupLocationIdx: index("rides_pickup_location_idx").on(table.pickupLat, table.pickupLng),
-  statusCreatedIdx: index("rides_status_created_idx").on(table.status, table.createdAt),
-}));
+});
 
-// Payments table - one-to-one with rides
+// Payments table
 export const payments = pgTable("payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  rideId: varchar("ride_id").notNull().unique().references(() => rides.id, { onDelete: 'cascade' }),
+  rideId: varchar("ride_id").notNull().references(() => rides.id),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
   paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
-  stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
   transactionId: text("transaction_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (table) => ({
-  rideIdIdx: uniqueIndex("payments_ride_id_idx").on(table.rideId),
-  statusIdx: index("payments_status_idx").on(table.paymentStatus),
-  stripeIntentIdx: index("payments_stripe_intent_idx").on(table.stripePaymentIntentId),
-}));
+});
 
-// Ratings table - many-to-one with rides (one rating per ride)
+// Ratings table
 export const ratings = pgTable("ratings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  rideId: varchar("ride_id").notNull().unique().references(() => rides.id, { onDelete: 'cascade' }),
-  raterId: varchar("rater_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  rateeId: varchar("ratee_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  rideId: varchar("ride_id").notNull().references(() => rides.id),
+  raterId: varchar("rater_id").notNull().references(() => users.id),
+  rateeId: varchar("ratee_id").notNull().references(() => users.id),
   rating: integer("rating").notNull(),
   feedback: text("feedback"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-}, (table) => ({
-  rideIdIdx: uniqueIndex("ratings_ride_id_idx").on(table.rideId),
-  rateeIdIdx: index("ratings_ratee_id_idx").on(table.rateeId),
-  raterIdIdx: index("ratings_rater_id_idx").on(table.raterId),
-  ratingValueIdx: index("ratings_value_idx").on(table.rating),
-}));
+});
 
-// Eco badges table - lookup table
+// Eco badges table
 export const ecoBadges = pgTable("eco_badges", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   description: text("description"),
   iconName: text("icon_name").notNull(),
   requiredPoints: integer("required_points").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-}, (table) => ({
-  requiredPointsIdx: index("eco_badges_required_points_idx").on(table.requiredPoints),
-}));
+});
 
-// User badges (many-to-many) - junction table between users and ecoBadges
+// User badges (many-to-many)
 export const userBadges = pgTable("user_badges", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  badgeId: varchar("badge_id").notNull().references(() => ecoBadges.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  badgeId: varchar("badge_id").notNull().references(() => ecoBadges.id),
   earnedAt: timestamp("earned_at").notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index("user_badges_user_id_idx").on(table.userId),
-  badgeIdIdx: index("user_badges_badge_id_idx").on(table.badgeId),
-  userBadgeUniqueIdx: uniqueIndex("user_badges_unique_idx").on(table.userId, table.badgeId),
-}));
+});
 
-// Referrals table - tracks referral relationships
+// Referrals table
 export const referrals = pgTable("referrals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  referrerId: varchar("referrer_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  refereeId: varchar("referee_id").notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  referrerId: varchar("referrer_id").notNull().references(() => users.id),
+  refereeId: varchar("referee_id").notNull().references(() => users.id),
   bonusAwarded: boolean("bonus_awarded").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-}, (table) => ({
-  referrerIdIdx: index("referrals_referrer_id_idx").on(table.referrerId),
-  refereeIdIdx: uniqueIndex("referrals_referee_id_idx").on(table.refereeId),
-}));
+});
 
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -321,6 +283,8 @@ export type Referral = typeof referrals.$inferSelect;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
 // Lightweight app-facing types (non-DB) for shared UI contracts
+// These do not change database schema; they provide simplified shapes
+// requested by the integration brief.
 export interface Location {
   address: string;
   lat: number;
