@@ -1,4 +1,4 @@
-import { apiFetch } from "@shared/lib/api";
+import { apiClient } from "@shared/lib/apiBase";
 import { auth } from "@shared/lib/firebase";
 
 async function getAuthHeader(): Promise<HeadersInit> {
@@ -12,15 +12,11 @@ async function getAuthHeader(): Promise<HeadersInit> {
 export const adminAnalytics = {
   async getStats() {
     const headers: HeadersInit = { ...(await getAuthHeader()) };
-    const res = await apiFetch('/api/admin/stats', { headers });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return apiClient.request('/api/admin/stats', { headers });
   },
   async getActiveRides() {
     const headers: HeadersInit = { ...(await getAuthHeader()) };
-    const res = await apiFetch('/api/admin/active-rides', { headers });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return apiClient.request('/api/admin/active-rides', { headers });
   },
 };
 

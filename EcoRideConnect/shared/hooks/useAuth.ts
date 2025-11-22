@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { auth } from '@shared/lib/firebase';
-import { apiFetch } from '@shared/lib/api';
+import { apiClient } from '@shared/lib/apiBase';
 import type { ApplicationVerifier, ConfirmationResult } from 'firebase/auth';
 import { signInWithPhoneNumber } from 'firebase/auth';
 
@@ -17,13 +17,8 @@ export function useAuth() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await apiFetch('/api/auth/verify');
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      } else {
-        setUser(null);
-      }
+      const data = await apiClient.request('/api/auth/verify');
+      setUser(data);
     } catch {
       setUser(null);
     } finally {
@@ -51,7 +46,7 @@ export function useAuth() {
   }, [refresh]);
 
   const simpleLogin = useCallback(async (email: string, name: string, role: 'rider' | 'driver' | 'admin') => {
-    await apiFetch('/api/auth/login', {
+    await apiClient.request('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name, role }),
@@ -60,7 +55,7 @@ export function useAuth() {
   }, [refresh]);
 
   const logout = useCallback(async () => {
-    await apiFetch('/api/auth/logout', { method: 'POST' });
+    await apiClient.request('/api/auth/logout', { method: 'POST' });
     setUser(null);
   }, []);
 

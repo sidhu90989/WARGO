@@ -1,4 +1,4 @@
-import { apiFetch, withApiBase } from "@shared/lib/api";
+import { apiClient } from "@shared/lib/apiBase";
 import { auth } from "@shared/lib/firebase";
 
 async function getAuthHeader(): Promise<HeadersInit> {
@@ -26,20 +26,16 @@ export const matchingService = {
       'Content-Type': 'application/json',
       ...(await getAuthHeader()),
     };
-    const res = await apiFetch('/api/rides', {
+    return apiClient.request('/api/rides', {
       method: 'POST',
       headers,
       body: JSON.stringify(input),
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
   },
 
   async getPendingRides() {
     const headers: HeadersInit = { ...(await getAuthHeader()) };
-    const res = await apiFetch('/api/driver/pending-rides', { headers });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return apiClient.request('/api/driver/pending-rides', { headers });
   },
 
   async acceptRide(rideId: string) {
@@ -47,9 +43,7 @@ export const matchingService = {
       'Content-Type': 'application/json',
       ...(await getAuthHeader()),
     };
-    const res = await apiFetch(withApiBase(`/api/rides/${rideId}/accept`), { method: 'POST', headers });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return apiClient.request(`/api/rides/${rideId}/accept`, { method: 'POST', headers });
   },
 
   async startRide(rideId: string) {
@@ -57,9 +51,7 @@ export const matchingService = {
       'Content-Type': 'application/json',
       ...(await getAuthHeader()),
     };
-    const res = await apiFetch(withApiBase(`/api/rides/${rideId}/start`), { method: 'POST', headers });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return apiClient.request(`/api/rides/${rideId}/start`, { method: 'POST', headers });
   },
 
   async completeRide(rideId: string, actualFare?: number) {
@@ -67,13 +59,11 @@ export const matchingService = {
       'Content-Type': 'application/json',
       ...(await getAuthHeader()),
     };
-    const res = await apiFetch(withApiBase(`/api/rides/${rideId}/complete`), {
+    return apiClient.request(`/api/rides/${rideId}/complete`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ actualFare }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
   },
 
   async sos(rideId: string) {
@@ -81,9 +71,7 @@ export const matchingService = {
       'Content-Type': 'application/json',
       ...(await getAuthHeader()),
     };
-    const res = await apiFetch(withApiBase(`/api/rides/${rideId}/sos`), { method: 'POST', headers });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    return apiClient.request(`/api/rides/${rideId}/sos`, { method: 'POST', headers });
   },
 };
 

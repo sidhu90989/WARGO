@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import socketService from '@shared/realtime/socketClient';
+import socketService from '@shared/realtime/socketIoClient';
 
 export function useLocation(userType: 'rider' | 'driver' | 'admin', autoConnect = true) {
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);

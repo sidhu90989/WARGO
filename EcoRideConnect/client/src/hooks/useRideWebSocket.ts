@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import socketService from "@shared/realtime/socketIoClient";
 
 export type LocationMessage = {
   type: "location_update";
@@ -16,57 +17,42 @@ type Options = {
 };
 
 export function useRideWebSocket({ rideId, who, onMessage }: Options) {
-  const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    // Derive WS URL from VITE_API_URL when present, otherwise same-origin
-    const apiUrl = (import.meta as any).env?.VITE_API_URL as string | undefined;
-    let url: string;
-    if (apiUrl) {
+    socketService.connect(who);
+
+    const offConnect = socketService.on("connect", () => setConnected(true));
+    const offDisconnect = socketService.on("disconnect", () => setConnected(false));
+    const offError = socketService.on("error", () => setConnected(false));
+    const offDriverLoc = socketService.on("driver_location", (data) => {
       try {
-        const u = new URL(apiUrl);
-        u.protocol = u.protocol === "https:" ? "wss:" : "ws:";
-        u.pathname = "/ws";
-        u.search = "";
-        url = u.toString();
+        if (!data) return;
+        if (data.rideId !== rideId) return;
+        const msg: LocationMessage = {
+          type: "location_update",
+          rideId: data.rideId,
+          lat: Number(data.lat),
+          lng: Number(data.lng),
+          who: (data.who as any) || "unknown",
+          at: Number(data.at) || Date.now(),
+        };
+        onMessage?.(msg);
       } catch {
-        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        url = `${protocol}://${window.location.host}/ws`;
+        // ignore malformed payloads
       }
-    } else {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      url = `${protocol}://${window.location.host}/ws`;
-    }
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
+    });
 
-    ws.onopen = () => setConnected(true);
-    ws.onclose = () => setConnected(false);
-    ws.onerror = () => setConnected(false);
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data) as LocationMessage;
-        if (data.type === "location_update" && data.rideId === rideId) {
-          onMessage?.(data);
-        }
-      } catch {}
+    return () => {
+      offConnect?.();
+      offDisconnect?.();
+      offError?.();
+      offDriverLoc?.();
     };
-
-    return () => ws.close();
-  }, [rideId, onMessage]);
+  }, [rideId, who, onMessage]);
 
   const sendLocation = (lat: number, lng: number) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    const msg: LocationMessage = {
-      type: "location_update",
-      rideId,
-      lat,
-      lng,
-      who,
-      at: Date.now(),
-    } as any;
-    wsRef.current.send(JSON.stringify(msg));
+    socketService.emitLocation(rideId, lat, lng, who);
   };
 
   return { connected, sendLocation };

@@ -1,4 +1,4 @@
-import { apiFetch } from "@shared/lib/api";
+import { apiClient } from "@shared/lib/apiBase";
 import { auth } from "@shared/lib/firebase";
 
 async function getAuthHeader(): Promise<HeadersInit> {
@@ -15,13 +15,11 @@ export const paymentService = {
       'Content-Type': 'application/json',
       ...(await getAuthHeader()),
     };
-    const res = await apiFetch('/api/create-payment-intent', {
+    return apiClient.request('/api/create-payment-intent', {
       method: 'POST',
       headers,
       body: JSON.stringify({ amount: amountInINR }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
   },
 };
 

@@ -5,6 +5,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
+import { z } from "zod";
 import Stripe from "stripe";
 import admin from "firebase-admin";
 import fs from "fs";
@@ -202,6 +203,40 @@ function generateReferralCode(name: string): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Zod validation helpers
+  const validateBody = (schema: z.ZodTypeAny) => (req: any, res: any, next: any) => {
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+    req.body = parsed.data;
+    next();
+  };
+  const validateParams = (schema: z.ZodTypeAny) => (req: any, res: any, next: any) => {
+    const parsed = schema.safeParse(req.params);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+    req.params = parsed.data;
+    next();
+  };
+
+  // Schemas
+  const idParamSchema = z.object({ id: z.string().min(1) });
+  const createRideSchema = z.object({
+    pickupLocation: z.string().min(1),
+    pickupLat: z.coerce.number(),
+    pickupLng: z.coerce.number(),
+    dropoffLocation: z.string().min(1),
+    dropoffLat: z.coerce.number(),
+    dropoffLng: z.coerce.number(),
+    vehicleType: z.enum(["e_rickshaw", "e_scooter", "cng_car"]),
+    femalePrefRequested: z.coerce.boolean().optional(),
+  });
+  const completeRideSchema = z.object({
+    actualFare: z.coerce.number().optional(),
+  });
+  const availabilitySchema = z.object({ available: z.coerce.boolean() });
   // Enable simple auth routes either when SIMPLE_AUTH=true or when explicitly
   // allowed via env for hybrid development with a real database.
   if (SIMPLE_AUTH || process.env.ALLOW_SIMPLE_AUTH_ROUTES === 'true') {
@@ -359,7 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ride routes - RIDERS ONLY can create rides
-  app.post("/api/rides", verifyFirebaseToken, async (req: any, res) => {
+  app.post("/api/rides", verifyFirebaseToken, validateBody(createRideSchema), async (req: any, res) => {
     try {
       const user = await storage.getUserByFirebaseUid(req.firebaseUid);
       if (!user) {
@@ -371,16 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Only riders can request rides' });
       }
 
-      const {
-        pickupLocation,
-        pickupLat,
-        pickupLng,
-        dropoffLocation,
-        dropoffLat,
-        dropoffLng,
-        vehicleType,
-        femalePrefRequested,
-      } = req.body;
+      const { pickupLocation, pickupLat, pickupLng, dropoffLocation, dropoffLat, dropoffLng, vehicleType, femalePrefRequested } = req.body;
 
       // Calculate estimated fare, distance and eco impact
       const { estimateRide } = await import("@shared/services/ridePricingService");
@@ -414,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/rides/:id", verifyFirebaseToken, async (req: any, res) => {
+  app.get("/api/rides/:id", verifyFirebaseToken, validateParams(idParamSchema), async (req: any, res) => {
     try {
       const ride = await storage.getRide(req.params.id);
       if (!ride) {
@@ -427,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DRIVERS ONLY can accept rides
-  app.post("/api/rides/:id/accept", verifyFirebaseToken, async (req: any, res) => {
+  app.post("/api/rides/:id/accept", verifyFirebaseToken, validateParams(idParamSchema), async (req: any, res) => {
     try {
       const user = await storage.getUserByFirebaseUid(req.firebaseUid);
       if (!user) {
@@ -467,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/rides/:id/complete", verifyFirebaseToken, async (req: any, res) => {
+  app.post("/api/rides/:id/complete", verifyFirebaseToken, validateParams(idParamSchema), validateBody(completeRideSchema), async (req: any, res) => {
     try {
       const { actualFare } = req.body;
       const ride = await storage.getRide(req.params.id);
@@ -527,7 +553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Start ride (driver only)
-  app.post("/api/rides/:id/start", verifyFirebaseToken, async (req: any, res) => {
+  app.post("/api/rides/:id/start", verifyFirebaseToken, validateParams(idParamSchema), async (req: any, res) => {
     try {
       const user = await storage.getUserByFirebaseUid(req.firebaseUid);
       if (!user) return res.status(404).json({ error: 'User not found' });
@@ -550,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SOS trigger (rider only - but keep simple)
-  app.post("/api/rides/:id/sos", verifyFirebaseToken, async (req: any, res) => {
+  app.post("/api/rides/:id/sos", verifyFirebaseToken, validateParams(idParamSchema), async (req: any, res) => {
     try {
       const ride = await storage.getRide(req.params.id);
       if (!ride) return res.status(404).json({ error: 'Ride not found' });
@@ -605,7 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DRIVERS ONLY - toggle availability to receive ride requests
-  app.put("/api/driver/availability", verifyFirebaseToken, async (req: any, res) => {
+  app.put("/api/driver/availability", verifyFirebaseToken, validateBody(availabilitySchema), async (req: any, res) => {
     try {
       const user = await storage.getUserByFirebaseUid(req.firebaseUid);
       if (!user) {

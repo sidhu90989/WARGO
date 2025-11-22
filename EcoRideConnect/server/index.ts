@@ -3,8 +3,11 @@ config(); // Load environment variables from .env file
 
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import session from "express-session";
 import MemoryStoreFactory from "memorystore";
+import connectRedis from "connect-redis";
+import { createClient as createRedisClient } from "redis";
 import { registerRoutes } from "./routes";
 import "./env"; // validate env at startup
 
@@ -59,21 +62,49 @@ const isCodespaces = !!process.env.CODESPACES;
 const forceSecure = process.env.COOKIE_SECURE === 'true';
 const useSecureCookies = isCodespaces || forceSecure;
 const sameSitePolicy: "lax" | "none" = useSecureCookies ? "none" : "lax";
+
+// Optional Redis-backed session store
+let sessionStore: session.Store;
+if (process.env.REDIS_URL) {
+  const RedisStore = connectRedis(session);
+  const redisClient = createRedisClient({ url: process.env.REDIS_URL });
+  redisClient.on('error', (err) => console.error('[redis] client error:', err));
+  // connect asynchronously; do not block server start
+  redisClient.connect().catch((e) => console.error('[redis] connect failed:', e));
+  sessionStore = new RedisStore({ client: redisClient, prefix: 'sess:' });
+} else {
+  sessionStore = new MemoryStore({ checkPeriod: 1000 * 60 * 60 });
+}
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "dev-session-secret",
     resave: false,
     saveUninitialized: false,
-    store: new MemoryStore({ checkPeriod: 1000 * 60 * 60 }), // prune expired every hour
-    proxy: true, // honor X-Forwarded-* headers for secure cookies
+    store: sessionStore,
+    proxy: true,
     cookie: {
-      secure: useSecureCookies, // required when served over HTTPS via proxy
+      secure: useSecureCookies,
       httpOnly: true,
       sameSite: sameSitePolicy,
-      maxAge: 1000 * 60 * 60 * 8, // 8 hours
+      maxAge: 1000 * 60 * 60 * 8,
     },
   }),
 );
+
+// Basic rate limiting (per IP)
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false });
+const authLimiter = rateLimit({ windowMs: 10 * 60 * 1000, max: 50, standardHeaders: true, legacyHeaders: false });
+const rideCreateLimiter = rateLimit({ windowMs: 5 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
+app.use('/api', apiLimiter);
+app.use(['/api/auth', '/api/create-payment-intent'], authLimiter);
+app.use('/api/rides', (req, res, next) => {
+  // Only rate-limit creation: POST /api/rides
+  if (req.method === 'POST' && (req.path === '/' || req.path === '')) {
+    return rideCreateLimiter(req, res, next);
+  }
+  return next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
