@@ -66,12 +66,11 @@ const sameSitePolicy: "lax" | "none" = useSecureCookies ? "none" : "lax";
 // Optional Redis-backed session store
 let sessionStore: session.Store;
 if (process.env.REDIS_URL) {
-  const RedisStore = connectRedis(session);
   const redisClient = createRedisClient({ url: process.env.REDIS_URL });
   redisClient.on('error', (err) => console.error('[redis] client error:', err));
   // connect asynchronously; do not block server start
   redisClient.connect().catch((e) => console.error('[redis] connect failed:', e));
-  sessionStore = new RedisStore({ client: redisClient, prefix: 'sess:' });
+  sessionStore = new connectRedis({ client: redisClient as any, prefix: 'sess:' });
 } else {
   sessionStore = new MemoryStore({ checkPeriod: 1000 * 60 * 60 });
 }
