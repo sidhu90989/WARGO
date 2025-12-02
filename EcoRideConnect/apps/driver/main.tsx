@@ -1,3 +1,4 @@
+import React from "react";
 import { createRoot } from "react-dom/client";
 import DriverApp from "./src/DriverApp";
 import "../../client/src/index.css";
