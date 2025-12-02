@@ -6,19 +6,21 @@ import path from "path";
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      manifest: {
-        name: 'WARGO RIDE',
-        short_name: 'WARGO',
-        description: 'Book reliable rides with WARGO',
-        theme_color: '#000000',
-        background_color: '#ffffff',
-        icons: [
-          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
-        ],
-      },
-    }),
+    // Temporarily disable PWA to avoid stale service worker causing blank screens.
+    // Re-enable after confirming runtime stability.
+    // VitePWA({
+    //   registerType: 'autoUpdate',
+    //   manifest: {
+    //     name: 'WARGO RIDE',
+    //     short_name: 'WARGO',
+    //     description: 'Book reliable rides with WARGO',
+    //     theme_color: '#000000',
+    //     background_color: '#ffffff',
+    //     icons: [
+    //       { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
+    //     ],
+    //   },
+    // }),
   ],
   resolve: {
     alias: {

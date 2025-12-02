@@ -6,20 +6,21 @@ import path from "path";
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      manifest: {
-        name: 'WARGO Admin',
-        short_name: 'WARGO Admin',
-        description: 'WARGO Platform Administration',
-        theme_color: '#1a365d',
-        background_color: '#ffffff',
-        display: 'standalone',
-        icons: [
-          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
-        ],
-      },
-    }),
+    // Temporarily disable PWA to avoid stale service worker assets.
+    // VitePWA({
+    //   registerType: 'autoUpdate',
+    //   manifest: {
+    //     name: 'WARGO Admin',
+    //     short_name: 'WARGO Admin',
+    //     description: 'WARGO Platform Administration',
+    //     theme_color: '#1a365d',
+    //     background_color: '#ffffff',
+    //     display: 'standalone',
+    //     icons: [
+    //       { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' },
+    //     ],
+    //   },
+    // }),
   ],
   resolve: {
     alias: {

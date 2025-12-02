@@ -29,6 +29,12 @@
       ],
       "headers": [
         {
+          "source": "/index.html",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-store, max-age=0" }
+          ]
+        },
+        {
           "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css)",
           "headers": [
             { "key": "Cache-Control", "value": "max-age=31536000" }
@@ -42,6 +48,14 @@
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         { "source": "**", "destination": "/index.html" }
+      ],
+      "headers": [
+        {
+          "source": "/index.html",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-store, max-age=0" }
+          ]
+        }
       ]
     },
     {
@@ -52,6 +66,12 @@
         { "source": "**", "destination": "/index.html" }
       ],
       "headers": [
+        {
+          "source": "/index.html",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-store, max-age=0" }
+          ]
+        },
         {
           "source": "**",
           "headers": [
