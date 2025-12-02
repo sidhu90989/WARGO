@@ -29,15 +29,9 @@
       ],
       "headers": [
         {
-          "source": "/index.html",
+          "source": "**",
           "headers": [
-            { "key": "Cache-Control", "value": "no-store, max-age=0" }
-          ]
-        },
-        {
-          "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css)",
-          "headers": [
-            { "key": "Cache-Control", "value": "max-age=31536000" }
+            { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" }
           ]
         }
       ]
@@ -51,9 +45,9 @@
       ],
       "headers": [
         {
-          "source": "/index.html",
+          "source": "**",
           "headers": [
-            { "key": "Cache-Control", "value": "no-store, max-age=0" }
+            { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" }
           ]
         }
       ]
@@ -67,14 +61,9 @@
       ],
       "headers": [
         {
-          "source": "/index.html",
-          "headers": [
-            { "key": "Cache-Control", "value": "no-store, max-age=0" }
-          ]
-        },
-        {
           "source": "**",
           "headers": [
+            { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" },
             { "key": "X-Frame-Options", "value": "DENY" },
             { "key": "X-Content-Type-Options", "value": "nosniff" },
             { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
