@@ -13,6 +13,16 @@
     <div id="root"></div>
     <script type="module" src="/main.tsx"></script>
     <script>
+      // Unregister any old service workers that might be caching stale files
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+    </script>
+    <script>
       (function(){
         const el = document.getElementById('app-error');
         function show(msg){
