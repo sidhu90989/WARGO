@@ -6,19 +6,19 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-  <meta name="description" content="WARGO Partner Driver Application" />
-  <meta name="theme-color" content="#000000" />
+    <meta name="description" content="WARGO Partner Driver Application" />
+    <meta name="theme-color" content="#000000" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <title>WARGO PARTNER - Driver App</title>
+    <title>WARGO PARTNER - Driver App</title>
   </head>
   <body>
-    <div id="app-error" style="display:none;position:fixed;bottom:12px;left:12px;right:12px;padding:10px;border-radius:8px;background:#fee2e2;color:#7f1d1d;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;z-index:9999"></div>
+    <div id="app-error" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:90%;padding:20px;border-radius:8px;background:#fee2e2;color:#7f1d1d;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;z-index:9999;box-shadow:0 4px 6px rgba(0,0,0,0.1)"></div>
     <div id="root"></div>
     <script type="module" src="/main.tsx"></script>
     <script>
       // Force clear cache and reload on version change
       (function() {
-        const APP_VERSION = '2025-12-02-v2';
+        const APP_VERSION = '2025-12-03-v1';
         const STORAGE_KEY = 'wargo-driver-version';
         const lastVersion = localStorage.getItem(STORAGE_KEY);
         

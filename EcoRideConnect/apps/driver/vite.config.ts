@@ -13,7 +13,14 @@ const cacheBustPlugin = (): Plugin => ({
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic',
+      babel: {
+        plugins: [],
+        babelrc: false,
+        configFile: false,
+      },
+    }),
     cacheBustPlugin(),
     // Temporarily disable PWA to avoid service worker caching issues.
     // VitePWA({

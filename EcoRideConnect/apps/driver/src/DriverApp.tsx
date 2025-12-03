@@ -1,4 +1,3 @@
-import React from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -73,16 +72,50 @@ function Router() {
 }
 
 export default function DriverApp() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
+  try {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    );
+  } catch (error) {
+    console.error('DriverApp initialization error:', error);
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        padding: '20px',
+        textAlign: 'center',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <div>
+          <h1 style={{ color: '#dc2626', marginBottom: '10px' }}>Application Error</h1>
+          <p>{error instanceof Error ? error.message : 'Unknown error occurred'}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              background: '#000',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 }
