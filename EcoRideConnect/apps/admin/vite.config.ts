@@ -1,11 +1,20 @@
-import { defineConfig } from "vite";
+import { defineConfig, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from 'vite-plugin-pwa';
 import path from "path";
 
+const cacheBustPlugin = (): Plugin => ({
+  name: 'cache-bust-html',
+  transformIndexHtml(html) {
+    const timestamp = Date.now();
+    return html.replace(/(<script[^>]*src="[^"]+")>/g, `$1?v=${timestamp}>`);
+  },
+});
+
 export default defineConfig({
   plugins: [
     react(),
+    cacheBustPlugin(),
     // Temporarily disable PWA to avoid stale service worker assets.
     // VitePWA({
     //   registerType: 'autoUpdate',

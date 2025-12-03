@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { RideMap, type LatLng } from "@/components/maps/RideMap";
 
 function interpolatePath(a: LatLng, b: LatLng, steps = 60): LatLng[] {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { APIProvider, Map, Marker, useMap } from "@vis.gl/react-google-maps";
 
 export type LatLng = { lat: number; lng: number };
