@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test React Loading</title>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module">
+        import { createRoot } from "react-dom/client";
+        import React from "react";
+        
+        console.log("React:", React);
+        console.log("createRoot:", createRoot);
+        
+        const App = () => {
+            return React.createElement("h1", null, "React is working!");
+        };
+        
+        const root = createRoot(document.getElementById("root"));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>

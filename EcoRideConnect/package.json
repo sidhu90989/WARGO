@@ -23,7 +23,7 @@
     "dev:admin": "npm run admin:dev",
     "dev:all": "concurrently \"npm run rider:dev\" \"npm run driver:dev\" \"npm run admin:dev\"",
     "rider:build": "VITE_APP_NAME=WARGO VITE_APP_SUBTITLE=RIDE vite build --config apps/rider/vite.config.ts && touch dist/rider/.nojekyll",
-    "driver:build": "VITE_APP_NAME='WARGO PARTNER' vite build --config apps/driver/vite.config.ts && touch dist/driver/.nojekyll",
+    "driver:build": "VITE_APP_NAME='WARGO PARTNER' VITE_APP_ROLE=driver VITE_API_URL=https://trusty-diorama-475905-c3.web.app VITE_SIMPLE_AUTH=true vite build --config apps/driver/vite.config.ts && touch dist/driver/.nojekyll",
     "admin:build": "VITE_APP_NAME=WARGO vite build --config apps/admin/vite.config.ts && touch dist/admin/.nojekyll",
     "build:rider": "npm run rider:build",
     "build:driver": "npm run driver:build",

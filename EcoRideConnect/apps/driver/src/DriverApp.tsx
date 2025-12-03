@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -21,7 +22,7 @@ function ProtectedRoute({
   component: Component,
   allowedRoles,
 }: {
-  component: React.ComponentType<any>;
+  component: ComponentType<any>;
   allowedRoles?: string[];
 }) {
   const { user, loading } = useAuth();
